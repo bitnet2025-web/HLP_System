@@ -588,3 +588,53 @@ main {
 .styled-table tr:nth-child(even) {
     background-color: #f9f9f9;
 }
+/* ==========================================================================
+   Mobile Responsive Adjustments
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  /* Prevent horizontal scrolling */
+  html, body {
+    overflow-x: hidden;
+    font-size: 14px;
+  }
+
+  /* Stack main layout vertically */
+  .container, .main-wrapper, .dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+    padding: 10px !important;
+    margin: 0 !important;
+  }
+
+  /* Convert sidebar into a collapsible/full-width header block */
+  .sidebar {
+    width: 100% !important;
+    position: relative !important;
+    height: auto !important;
+    padding: 15px !important;
+  }
+
+  /* Ensure tables scroll smoothly horizontally instead of breaking layout */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 100%;
+  }
+
+  /* Touch-friendly buttons and inputs */
+  button, input, select, .btn {
+    width: 100% !important;
+    min-height: 44px;
+    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+    margin-bottom: 8px;
+  }
+
+  /* Form controls side-by-side to full width */
+  .form-group, .input-group {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+}
