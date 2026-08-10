@@ -1,0 +1,8 @@
+HLP_RATES = {
+    "ELECTRICITY_KWH": 19.33,
+    "WATER_NCC": 67,
+    "WATER_BOREHOLE": 68,
+    "LPG_PERCENT": 18.5,
+    "LPG_SCM": 113,
+    "DIESEL": 160
+}

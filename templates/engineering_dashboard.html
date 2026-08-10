@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .dash-wrapper { display: flex; flex-direction: column; gap: 25px; }
+    .control-header { background: var(--navy); color: white; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    .control-header h1 { margin: 0; font-size: 1.5em; }
+    
+    /* Time Filter Buttons */
+    .filter-group { display: flex; gap: 5px; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 6px; }
+    .filter-btn { padding: 8px 16px; border: none; background: transparent; color: #bdc3c7; border-radius: 4px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 0.85em; transition: all 0.2s; }
+    .filter-btn.active { background: var(--maroon); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .filter-btn:hover:not(.active) { color: white; background: rgba(255,255,255,0.05); }
+
+    .metrics-section-title { color: var(--navy); margin: 15px 0 5px 0; border-bottom: 2px solid var(--gold); padding-bottom: 6px; font-size: 1.3em; display: flex; align-items: center; gap: 8px; }
+
+    .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .chart-grid-full { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (max-width: 768px) { .chart-grid-3 { grid-template-columns: 1fr; } }
+
+    .panel-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+    .panel-card h3 { margin-top: 0; margin-bottom: 15px; color: #4a5568; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; }
+    .canvas-box { position: relative; width: 100%; height: 260px; }
+</style>
+
+<div class="dash-wrapper">
+
+    <div class="control-header">
+        <div>
+            <h1>📊 Engineering Operations Intelligence</h1>
+            <small>Active Operational Horizon Tracking — {{ current_month|default('') }}</small>
+        </div>
+        
+        <div class="filter-group">
+            <a href="?range=monthly" class="filter-btn {% if time_range == 'monthly' %}active{% endif %}">Current Month</a>
+            <a href="?range=semiannual" class="filter-btn {% if time_range == 'semiannual' %}active{% endif %}">Semi-Annual (6M)</a>
+            <a href="?range=annual" class="filter-btn {% if time_range == 'annual' %}active{% endif %}">Annual Matrix (12M)</a>
+        </div>
+    </div>
+
+    <div class="metrics-section-title">⚙️ Plant & Machinery Maintenance Performance</div>
+    <div class="chart-grid-3">
+        <div class="panel-card">
+            <h3>PPM Execution Status Ratios</h3>
+            <div class="canvas-box"><canvas id="machineryPie"></canvas></div>
+        </div>
+        <div class="panel-card">
+            <h3>Section Maintenance Workloads</h3>
+            <div class="canvas-box"><canvas id="machineryDeptBar"></canvas></div>
+        </div>
+    </div>
+
+    <div class="metrics-section-title">🏨 Guest Rooms Maintenance Audit</div>
+    <div class="chart-grid-3">
+        <div class="panel-card">
+            <h3>Guest Room Inspection Coverage</h3>
+            <div class="canvas-box"><canvas id="roomsPie"></canvas></div>
+        </div>
+        <div class="panel-card" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+            <h3 style="width:100%; text-align:left;">Room PPM Executive Summary</h3>
+            <div style="margin: auto;">
+                <h1 style="font-size: 3.5em; margin:0; color:var(--maroon);">{{ room_completed|default(0) }}</h1>
+                <p style="color:#718096; font-weight:bold; margin-top:5px; text-transform:uppercase; font-size:0.85em;">Total Rooms Inspected & Verified</p>
+                <span style="background:#edf2f7; padding:5px 12px; border-radius:20px; font-size:0.8em; font-weight:bold; color:#4a5568;">
+                    ⏳ {{ room_pending|default(0) }} Rooms Scheduled / In Progress
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-section-title">💰 Material Logistics & Expense Trends</div>
+    <div class="chart-grid-full">
+        <div class="panel-card">
+            <h3>Departmental Spare-Parts Expenditure Distribution (KES)</h3>
+            <div class="canvas-box" style="height:320px;"><canvas id="costDistributionBar"></canvas></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    // Global configurations
+    const legendOptions = { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } };
+
+    // 1. Machinery Pie Chart - Status Labels
+    new Chart(document.getElementById('machineryPie').getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: ['Completed', 'Pending Review'],
+            datasets: [{
+                data: [{{ machinery_completed|default(0) }}, {{ machinery_pending|default(0) }}],
+                backgroundColor: ['#2f855a', '#dd6b20'],
+                borderWidth: 2
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: legendOptions } }
+    });
+
+    // 2. Machinery Department Stacked Bar Chart
+    new Chart(document.getElementById('machineryDeptBar').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {{ (bar_labels or [])|tojson }},
+            datasets: [
+                { label: 'Completed', data: {{ (machinery_dept_completed or [])|tojson }}, backgroundColor: '#2b6cb0' },
+                { label: 'In Progress / Pending', data: {{ (machinery_dept_pending or [])|tojson }}, backgroundColor: '#feebcb', borderColor: '#dd6b20', borderWidth: 1 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } },
+            plugins: { legend: legendOptions }
+        }
+    });
+
+    // 3. Guest Rooms Pie Chart
+    new Chart(document.getElementById('roomsPie').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed Inspections', 'Pending Operations'],
+            datasets: [{
+                data: [{{ room_completed|default(0) }}, {{ room_pending|default(0) }}],
+                backgroundColor: ['#319795', '#ed8936'],
+                borderWidth: 2
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: legendOptions }, cutOut: '65%' }
+    });
+
+    // 4. Material Expense Requisition Bar Chart
+    new Chart(document.getElementById('costDistributionBar').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {{ (bar_labels or [])|tojson }},
+            datasets: [{
+                label: 'Total Expenditures (KES)',
+                data: {{ (requisition_dept_costs or [])|tojson }},
+                backgroundColor: '#4a5568',
+                hoverBackgroundColor: '#800000',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return 'KES ' + value.toLocaleString(); }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) { return 'Cost: KES ' + context.raw.toLocaleString(); }
+                    }
+                }
+            }
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

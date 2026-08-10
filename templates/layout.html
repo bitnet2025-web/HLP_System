@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Four Points — HLP System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        :root {
+            --maroon: #800000;
+            --gold: #d4af37;
+            --navy: #2c3e50;
+            --dark-bg: #1a252f;
+            --light-bg: #f8f9fa;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR NAV STYLING --- */
+        .app-sidebar {
+            width: var(--sidebar-width);
+            background: var(--dark-bg);
+            color: #ecf0f1;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        }
+
+        .sidebar-brand {
+            padding: 25px 20px;
+            background: var(--maroon);
+            text-align: center;
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .sidebar-brand h3 { margin: 0; font-size: 1.1em; letter-spacing: 2px; color: white; }
+        .sidebar-brand small { color: var(--gold); font-size: 0.75em; letter-spacing: 1px; }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .menu-label {
+            padding: 12px 25px 6px 25px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 25px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-left-color: var(--gold);
+        }
+
+        .sidebar-user {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid #2c3e50;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* --- MAIN LAYOUT WRAPPER --- */
+        .app-main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 30px;
+            box-sizing: border-box;
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        /* Search input components inside sidebar */
+        .sidebar-search-form {
+            padding: 0 20px 10px 20px;
+        }
+        .sidebar-search-form input {
+            width: 100%;
+            padding: 8px;
+            background: #2c3e50;
+            border: 1px solid #34495e;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.85em;
+            box-sizing: border-box;
+        }
+
+        /* --- PRINTER COMPATIBILITY --- */
+        @media print {
+            .app-sidebar { display: none !important; }
+            .app-main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="app-sidebar">
+        <div class="sidebar-brand">
+            <h3>FOUR POINTS</h3>
+            <small>BY SHERATON</small>
+        </div>
+
+        <ul class="sidebar-menu">
+            <li class="menu-label">Search Archives</li>
+            <div class="sidebar-search-form">
+                
+                    <input type="date" name="search_date" onchange="this.form.submit()" title="Choose target historical file tracking date">
+                </form>
+            </div>
+
+            <li class="menu-label">Core Navigation</li>
+            <li><a href="{{ url_for('dashboard') }}">🏠 Core Dashboard</a></li>
+            
+            <li class="menu-label">Asset Maintenance</li>
+            <li><a href="{{ url_for('ppm_hub') }}">🛠️ PPM Management Desk</a></li>
+
+            <li class="menu-label">Logistics</li>
+            <li><a href="{{ url_for('material_requisition') }}">📋 Material Requisition</a></li>
+
+            <li class="menu-label">Operations & Handovers</li>
+      
+
+            <li class="menu-label">HLP Tools</li>
+            <li><a href="{{ url_for('hlp_calculator') }}">🧮 HLP Calculator</a></li>
+        </ul>
+
+        <div class="sidebar-user">
+            <div>🔑 Role: <strong>{{ session.role|upper if session and session.role else 'GUEST' }}</strong></div>
+            <a href="{{ url_for('logout') }}" style="color: #ff4d4d; text-decoration: none; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                🚪 Logout Assignment
+            </a>
+        </div>
+    </aside>
+
+    <main class="app-main-content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages" style="margin-bottom: 20px;">
+                    {% for message in messages %}
+                        <div class="alert" style="padding: 12px 20px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+        <footer style="margin-top: 60px; border-top: 1px solid #ddd; padding-top: 15px; font-size: 0.8em; color: #777; text-align: center;" class="no-print">
+            <p>&copy; 2026 HLP System — Four Points Engineering</p>
+        </footer>
+    </main>
+
+</body>
+</html>

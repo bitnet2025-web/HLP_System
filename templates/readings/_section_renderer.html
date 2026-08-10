@@ -1,0 +1,42 @@
+{% if reading.section == "electrical" %}
+
+<h3>⚡ Electrical Section Readings</h3>
+
+<table class="styled-table">
+<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+
+<tr><td>Voltage</td><td>{{ reading.data.voltage }}</td><td>V</td></tr>
+<tr><td>Current</td><td>{{ reading.data.current }}</td><td>A</td></tr>
+<tr><td>Power</td><td>{{ reading.data.power }}</td><td>kW</td></tr>
+<tr><td>Frequency</td><td>{{ reading.data.frequency }}</td><td>Hz</td></tr>
+
+</table>
+
+{% elif reading.section == "mechanical" %}
+
+<h3>⚙ Mechanical Section Readings</h3>
+
+<table class="styled-table">
+<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+
+<tr><td>Temperature</td><td>{{ reading.data.temperature }}</td><td>°C</td></tr>
+<tr><td>Pressure</td><td>{{ reading.data.pressure }}</td><td>Bar</td></tr>
+<tr><td>RPM</td><td>{{ reading.data.rpm }}</td><td>RPM</td></tr>
+
+</table>
+
+{% else %}
+
+<h3>Section Readings</h3>
+
+<table class="styled-table">
+<tr><th>Field</th><th>Value</th></tr>
+{% for k,v in reading.data.items() %}
+<tr>
+  <td>{{ k|replace("_"," ")|title }}</td>
+  <td>{{ v }}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endif %}

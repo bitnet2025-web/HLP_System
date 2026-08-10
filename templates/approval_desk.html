@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .desk-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; }
+    .desk-title { color: var(--maroon); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+    
+    .desk-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .desk-table th { background: var(--navy); color: white; padding: 12px; text-align: left; font-size: 0.9em; }
+    .desk-table td { padding: 14px 12px; border-bottom: 1px solid #eee; font-size: 0.95em; }
+    .desk-table tr:hover { background: #fdfdfd; }
+    
+    .status-badge-inline { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase; }
+    
+    .btn-review { background: var(--maroon); color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; transition: background 0.2s; }
+    .btn-review:hover { background: #600000; }
+    
+    .clean-slate-notice { text-align: center; padding: 40px 20px; color: #555; }
+</style>
+
+<div class="desk-card">
+    <h2 class="desk-title">
+        <span>⏳ Pending Approvals Desk</span>
+        <span style="font-size: 0.5em; background: #dc3545; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold;">
+            {{ pending_days|length }} Awaiting Action
+        </span>
+    </h2>
+    
+    <p style="color: #666; font-size: 0.95em;">The following operational log files have been submitted by tech shifts but are currently awaiting final supervisor verification and signature bindings.</p>
+
+    {% if pending_days %}
+        <table class="desk-table">
+            <thead>
+                <tr>
+                    <th>Target Log Date</th>
+                    <th>Current Workflow Status</th>
+                    <th>Last System Update</th>
+                    <th style="text-align: right;">Action Workspace</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day in pending_days %}
+                    <tr>
+                        <td><strong>{{ day.report_date }}</strong></td>
+                        <td><span class="status-badge-inline">{{ day.status }}</span></td>
+                        <td style="color: #777; font-size: 0.9em;">{{ day.updated_at or 'N/A' }}</td>
+                        <td style="text-align: right;">
+                            <a href="{{ url_for('hlp_master', search_date=day.report_date) }}" class="btn-review">
+                                🔍 Open & Review File
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="clean-slate-notice">
+            <div style="font-size: 3.5em; margin-bottom: 15px;">🎉</div>
+            <h3 style="color: #155724; margin: 0 0 10px 0;">All Logs Fully Signed Off!</h3>
+            <p style="color: #666; margin: 0; font-size: 0.95em;">Great job! There are no pending technical readings or logs requiring supervisor confirmation at this time.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

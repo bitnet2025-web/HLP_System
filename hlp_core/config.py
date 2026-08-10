@@ -1,0 +1,8 @@
+RATES = {
+    "ELECTRICITY_KPLC": 19.33,
+    "WATER_NCC": 67,
+    "WATER_BOREHOLE": 68,
+    "LPG_PERCENT_TO_KG": 18.5,
+    "LPG_KG_TO_COST": 113,
+    "DIESEL": 160,
+}

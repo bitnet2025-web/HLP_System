@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .desk-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; }
+    .desk-title { color: var(--navy); border-bottom: 2px solid #eee; padding-bottom: 12px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+    
+    .desk-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .desk-table th { background: var(--maroon); color: white; padding: 12px; text-align: left; font-size: 0.9em; }
+    .desk-table td { padding: 14px 12px; border-bottom: 1px solid #eee; font-size: 0.95em; }
+    .desk-table tr:hover { background: #fdfdfd; }
+    
+    .status-badge-approved { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; text-transform: uppercase; }
+    
+    .btn-view-closed { background: var(--navy); color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; transition: background 0.2s; }
+    .btn-view-closed:hover { background: #1a252f; }
+    
+    .empty-archive-notice { text-align: center; padding: 40px 20px; color: #555; }
+</style>
+
+<div class="desk-card">
+    <h2 class="desk-title">
+        <span>📁 Official Approved Archives</span>
+        <span style="font-size: 0.5em; background: #28a745; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold;">
+            {{ approved_days|length }} Closed Files
+        </span>
+    </h2>
+    
+    <p style="color: #666; font-size: 0.95em;">Below is the repository of historically signed-off HLP logs. These documents are locked against alteration and remain archived for executive reference and audit tracking.</p>
+
+    {% if approved_days %}
+        <table class="desk-table">
+            <thead>
+                <tr>
+                    <th>Log Calendar Date</th>
+                    <th>System Verification Status</th>
+                    <th>Archived Timestamp</th>
+                    <th style="text-align: right;">Document Link</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day in approved_days %}
+                    <tr>
+                        <td><strong>{{ day.report_date }}</strong></td>
+                        <td><span class="status-badge-approved">{{ day.status }}</span></td>
+                        <td style="color: #777; font-size: 0.9em;">{{ day.updated_at or 'N/A' }}</td>
+                        <td style="text-align: right;">
+                            <a href="{{ url_for('hlp_master', search_date=day.report_date) }}" class="btn-view-closed">
+                                📄 View Sealed File
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-archive-notice">
+            <div style="font-size: 3.5em; margin-bottom: 15px;">📂</div>
+            <h3 style="color: #6c757d; margin: 0 0 10px 0;">Archive Repository Empty</h3>
+            <p style="color: #666; margin: 0; font-size: 0.95em;">No daily report files have been signed off or moved to the official approved database ledger yet for this cycle.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

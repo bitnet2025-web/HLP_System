@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="admin-container" style="max-width: 1100px; margin: auto; padding: 20px;">
+    
+    <h2 style="color: var(--maroon); border-bottom: 2px solid var(--gold); padding-bottom: 10px;">
+        Admin Control Center
+    </h2>
+
+    <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+        
+        <div class="panel" style="background: white; border: 1px solid #ddd; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="color: var(--maroon); margin-top:0;">💰 Financial Settings</h3>
+            <p style="font-size: 0.9em; color: #666;">Set the unit costs used for the Daily Master HLP Calculator.</p>
+            <hr>
+            <form method="POST">
+                <input type="hidden" name="action" value="update_rates">
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">Electricity Rate (Ksh/kWh)</label>
+                    <input type="number" step="0.01" name="elec_rate" value="{{ rates.electricity }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">NCC Water Rate (Ksh/m³)</label>
+                    <input type="number" step="0.01" name="ncc_rate" value="{{ rates.ncc }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">Borehole Water Rate (Ksh/m³)</label>
+                    <input type="number" step="0.01" name="borehole_rate" value="{{ rates.borehole }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">Diesel Rate (Ksh/L)</label>
+                    <input type="number" step="0.01" name="diesel_rate" value="{{ rates.diesel }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">LPG Gas Rate (Ksh/Kg)</label>
+                    <input type="number" step="0.01" name="lpg_rate" value="{{ rates.lpg }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                </div>
+
+                <button type="submit" style="background: var(--maroon); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                    Save Global Rates
+                </button>
+            </form>
+        </div>
+
+        <div class="panel" style="background: white; border: 1px solid #ddd; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content;">
+            <h3 style="color: var(--maroon); margin-top:0;">🔑 Security & Access</h3>
+            <p style="font-size: 0.9em; color: #666;">Force password changes for system users.</p>
+            <hr>
+            <form method="POST">
+                <input type="hidden" name="action" value="reset_password">
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">Select User</label>
+                    <select name="target_user" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                        <option value="admin">Admin</option>
+                        <option value="supervisor">Supervisor</option>
+                        <option value="technician">Technician</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; font-weight:bold;">New Password</label>
+                    <input type="password" name="new_password" placeholder="Enter new password" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                </div>
+                <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                    Update Password
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <div style="margin-top: 30px; background: #fdfdfd; padding: 20px; border: 1px dashed #ccc; text-align: center; border-radius: 8px;">
+        <h4 style="margin-top:0; color: var(--navy);">System Shortcuts</h4>
+        <a href="{{ url_for('material_requisition') }}" style="color: var(--maroon); font-weight: bold; text-decoration: none;">📦 Manage Requisitions</a>
+    </div>
+</div>
+{% endblock %}

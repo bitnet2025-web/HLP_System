@@ -1,0 +1,327 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="calculator-container" style="max-width: 950px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+    
+    <!-- HEADER SECTION -->
+    <div style="border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="margin: 0; color: var(--maroon); font-size: 1.8em; letter-spacing: 1px;">HLP REPORT CALCULATOR</h2>
+            <small style="color: #666; font-weight: 600;">Four Points by Sheraton — Engineering Department</small>
+        </div>
+        <div style="text-align: right;">
+            <span style="background: var(--navy); color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold;">
+                Status: Live Calculation
+            </span>
+        </div>
+    </div>
+
+    <form id="hlpForm" method="POST" action="{{ url_for('save_hlp_report') }}">
+        
+        <!-- DATE SELECTION -->
+        <div style="margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid var(--maroon);">
+            <label for="report_date" style="font-weight: bold; color: var(--navy); display: block; margin-bottom: 5px;">Report Date (Default: Yesterday)</label>
+            <input type="date" id="report_date" name="report_date" class="form-control" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em;" required>
+        </div>
+
+        <!-- INPUT TABLE -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+            <thead>
+                <tr style="background: var(--navy); color: white; text-align: left;">
+                    <th style="padding: 12px; border-radius: 4px 0 0 0;">Utility / Meter Item</th>
+                    <th style="padding: 12px;">Consumption / Units</th>
+                    <th style="padding: 12px;">Rate (KSh)</th>
+                    <th style="padding: 12px; text-align: right; border-radius: 0 4px 0 0;">Calculated Cost (KSh)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 1. ELECTRICITY -->
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; font-weight: bold; color: var(--navy);">⚡ Electricity (Units)</td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="elect_units" name="elect_units" placeholder="0" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="elect_rate" name="elect_rate" value="{{ rates.elect if rates and rates.elect else 19.33 }}" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold;" id="elect_cost_disp">0.00</td>
+                </tr>
+
+                <!-- 2. WATER NCC -->
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; font-weight: bold; color: var(--navy);">🚰 Water NCC (m³)</td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="water_ncc_units" name="water_ncc_units" placeholder="0" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="water_ncc_rate" name="water_ncc_rate" value="{{ rates.water_ncc if rates and rates.water_ncc else 67 }}" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold;" id="water_ncc_cost_disp">0.00</td>
+                </tr>
+
+                <!-- 3. WATER BOREHOLE -->
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; font-weight: bold; color: var(--navy);">🏗️ Water Borehole (kL)</td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="water_bh_units" name="water_bh_units" placeholder="0" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="water_bh_rate" name="water_bh_rate" value="{{ rates.water_bh if rates and rates.water_bh else 68 }}" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold;" id="water_bh_cost_disp">0.00</td>
+                </tr>
+
+                <!-- 4. LPG -->
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; font-weight: bold; color: var(--navy);">🔥 LPG Gas (%)</td>
+                    <td style="padding: 12px;">
+                        <div style="display: flex; gap: 5px;">
+                            <input type="number" step="any" id="lpg_pct" name="lpg_pct" placeholder="%" style="width: 45%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" class="calc-input">
+                            <input type="number" step="any" id="lpg_scm" name="lpg_scm" placeholder="SCM" style="width: 55%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #e9ecef;" readonly>
+                        </div>
+                        <small style="color: #666; font-size: 0.75em;">1% LPG = 18.5 SCM</small>
+                    </td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="lpg_rate" name="lpg_rate" value="{{ rates.lpg if rates and rates.lpg else 113 }}" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold;" id="lpg_cost_disp">0.00</td>
+                </tr>
+
+                <!-- 5. DIESEL -->
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; font-weight: bold; color: var(--navy);">⛽ Diesel (Liters)</td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="diesel_units" name="diesel_units" placeholder="0" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px;">
+                        <input type="number" step="any" id="diesel_rate" name="diesel_rate" value="{{ rates.diesel if rates and rates.diesel else 222 }}" class="calc-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold;" id="diesel_cost_disp">0.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- TOTAL DISPLAY SUMMARY -->
+        <div style="background: #fdfaf0; border: 2px dashed var(--gold); padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <span style="font-size: 1.3em; font-weight: bold; color: var(--navy);">TOTAL HLP COST:</span>
+            <span style="font-size: 1.8em; font-weight: bold; color: var(--maroon);">KSh <span id="total_cost_disp">0.00</span></span>
+        </div>
+
+        <!-- SAVE BUTTON -->
+        <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" style="background: var(--maroon); color: white; border: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1em;">
+                💾 Save Report to Database
+            </button>
+        </div>
+
+    </form>
+
+    <!-- PREVIOUS RECORDS SECTION WITH ACTIONS -->
+    <div style="margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px;">
+        <h3 style="color: var(--navy); font-size: 1.4em; margin-bottom: 15px;">Saved HLP Records</h3>
+        
+        {% if records %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: #fafafa; border-radius: 6px; overflow: hidden; font-size: 0.85em;">
+                <thead>
+                    <tr style="background: #e9ecef; color: var(--navy); text-align: left;">
+                        <th style="padding: 10px;">Date</th>
+                        <th style="padding: 10px;">Elect. (Units / Rate)</th>
+                        <th style="padding: 10px;">Water NCC (m³ / Rate)</th>
+                        <th style="padding: 10px;">Water BH (kL / Rate)</th>
+                        <th style="padding: 10px;">LPG (% / Rate)</th>
+                        <th style="padding: 10px;">Diesel (L / Rate)</th>
+                        <th style="padding: 10px; text-align: right;">Total Cost (KSh)</th>
+                        <th style="padding: 10px; text-align: center; min-width: 180px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records %}
+                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                        <td style="padding: 10px; font-weight: bold; white-space: nowrap;">{{ rec.date }}</td>
+                        <td style="padding: 10px;">
+                            {{ "{:,.2f}".format(rec.elect_units) }}
+                            <br><small style="color: #666;">@ KSh {{ "{:,.2f}".format(rec.elect_rate if rec.elect_rate else 19.33) }}</small>
+                        </td>
+                        <td style="padding: 10px;">
+                            {{ "{:,.2f}".format(rec.water_ncc_units) }}
+                            <br><small style="color: #666;">@ KSh {{ "{:,.2f}".format(rec.water_ncc_rate if rec.water_ncc_rate else 67) }}</small>
+                        </td>
+                        <td style="padding: 10px;">
+                            {{ "{:,.2f}".format(rec.water_bh_units) }}
+                            <br><small style="color: #666;">@ KSh {{ "{:,.2f}".format(rec.water_bh_rate if rec.water_bh_rate else 68) }}</small>
+                        </td>
+                        <td style="padding: 10px;">
+                            {{ "{:,.1f}".format(rec.lpg_pct) }}%
+                            <br><small style="color: #666;">@ KSh {{ "{:,.2f}".format(rec.lpg_rate if rec.lpg_rate else 113) }}</small>
+                        </td>
+                        <td style="padding: 10px;">
+                            {{ "{:,.2f}".format(rec.diesel_units) }}
+                            <br><small style="color: #666;">@ KSh {{ "{:,.2f}".format(rec.diesel_rate if rec.diesel_rate else 222) }}</small>
+                        </td>
+                        <td style="padding: 10px; text-align: right; font-weight: bold; color: var(--maroon); font-size: 1em; white-space: nowrap;">
+                            {{ "{:,.2f}".format(rec.total_cost) }}
+                        </td>
+                        <td style="padding: 10px; text-align: center;">
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <!-- WHATSAPP SEND BUTTON FOR SAVED RECORD -->
+                                <button type="button" 
+                                    onclick="sendSavedRecordToWhatsapp('{{ rec.date }}', '{{ rec.elect_units }}', '{{ rec.elect_rate if rec.elect_rate else 19.33 }}', '{{ rec.water_ncc_units }}', '{{ rec.water_ncc_rate if rec.water_ncc_rate else 67 }}', '{{ rec.water_bh_units }}', '{{ rec.water_bh_rate if rec.water_bh_rate else 68 }}', '{{ rec.lpg_pct }}', '{{ rec.lpg_rate if rec.lpg_rate else 113 }}', '{{ rec.diesel_units }}', '{{ rec.diesel_rate if rec.diesel_rate else 222 }}', '{{ rec.total_cost }}')" 
+                                    style="background: #25D366; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 3px;" title="Send Saved Report via WhatsApp">
+                                    📱 Send
+                                </button>
+
+                                <!-- DELETE BUTTON -->
+                                <form method="POST" action="{{ url_for('delete_hlp_report', record_id=rec.id) }}" style="display: inline;">
+                                    <button type="submit" style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 0.85em; cursor: pointer;" onclick="return confirm('Are you sure you want to permanently delete this record?');">
+                                        🗑️ Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: #666; font-style: italic; font-size: 0.95em;">No saved HLP records found. Save a report above to send via WhatsApp.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- AUTO CALCULATION & WHATSAPP SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Automatically set date to YESTERDAY
+    const dateInput = document.getElementById('report_date');
+    if (dateInput && !dateInput.value) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        dateInput.value = yesterday.toISOString().split('T')[0];
+    }
+
+    // Add event listeners for dynamic active live calculation for every input
+    const inputs = document.querySelectorAll('.calc-input');
+    inputs.forEach(input => {
+        input.addEventListener('input', calculateHLP);
+        input.addEventListener('change', calculateHLP);
+        input.addEventListener('keyup', calculateHLP);
+    });
+
+    // Prevent Form Auto-Submit on Enter Key Press
+    const form = document.getElementById('hlpForm');
+    form.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            return false;
+        }
+    });
+
+    calculateHLP();
+});
+
+function calculateHLP() {
+    // Electricity
+    const electUnits = parseFloat(document.getElementById('elect_units').value) || 0;
+    const electRate = parseFloat(document.getElementById('elect_rate').value) || 0;
+    const electCost = electUnits * electRate;
+    document.getElementById('elect_cost_disp').innerText = electCost.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 2});
+
+    // Water NCC
+    const waterNccUnits = parseFloat(document.getElementById('water_ncc_units').value) || 0;
+    const waterNccRate = parseFloat(document.getElementById('water_ncc_rate').value) || 0;
+    const waterNccCost = waterNccUnits * waterNccRate;
+    document.getElementById('water_ncc_cost_disp').innerText = waterNccCost.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+
+    // Water Borehole
+    const waterBhUnits = parseFloat(document.getElementById('water_bh_units').value) || 0;
+    const waterBhRate = parseFloat(document.getElementById('water_bh_rate').value) || 0;
+    const waterBhCost = waterBhUnits * waterBhRate;
+    document.getElementById('water_bh_cost_disp').innerText = waterBhCost.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+
+    // LPG (1% = 18.5 SCM)
+    const lpgPct = parseFloat(document.getElementById('lpg_pct').value) || 0;
+    const lpgScm = lpgPct * 18.5;
+    document.getElementById('lpg_scm').value = lpgScm ? lpgScm.toFixed(1) : '';
+    const lpgRate = parseFloat(document.getElementById('lpg_rate').value) || 0;
+    const lpgCost = lpgScm * lpgRate;
+    document.getElementById('lpg_cost_disp').innerText = lpgCost.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+
+    // Diesel
+    const dieselUnits = parseFloat(document.getElementById('diesel_units').value) || 0;
+    const dieselRate = parseFloat(document.getElementById('diesel_rate').value) || 0;
+    const dieselCost = dieselUnits * dieselRate;
+    document.getElementById('diesel_cost_disp').innerText = dieselCost.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+
+    // Total
+    const totalCost = electCost + waterNccCost + waterBhCost + lpgCost + dieselCost;
+    document.getElementById('total_cost_disp').innerText = totalCost.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 2});
+}
+
+function sendSavedRecordToWhatsapp(dateStr, eUnits, eRate, wNccUnits, wNccRate, wBhUnits, wBhRate, lpgPct, lpgRate, dUnits, dRate, totalCostVal) {
+    // Format Date (e.g. 2026-08-05 -> 5/8/2026)
+    let formattedDate = dateStr;
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        formattedDate = `${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
+    }
+
+    const numEUnits = parseFloat(eUnits) || 0;
+    const numERate = parseFloat(eRate) || 19.33;
+    const eCost = (numEUnits * numERate).toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+
+    const numWNccUnits = parseFloat(wNccUnits) || 0;
+    const numWNccRate = parseFloat(wNccRate) || 67;
+    const wNccCost = (numWNccUnits * numWNccRate).toLocaleString('en-US', {maximumFractionDigits: 1});
+
+    const numWBhUnits = parseFloat(wBhUnits) || 0;
+    const numWBhRate = parseFloat(wBhRate) || 68;
+    const wBhCost = (numWBhUnits * numWBhRate).toLocaleString('en-US', {maximumFractionDigits: 1});
+
+    const numLpgPct = parseFloat(lpgPct) || 0;
+    const lpgScm = (numLpgPct * 18.5).toFixed(1);
+    const numLpgRate = parseFloat(lpgRate) || 113;
+    const lpgCost = (numLpgPct * 18.5 * numLpgRate).toLocaleString('en-US', {maximumFractionDigits: 1});
+
+    const numDUnits = parseFloat(dUnits) || 0;
+    const numDRate = parseFloat(dRate) || 222;
+    const dCost = (numDUnits * numDRate).toLocaleString('en-US', {maximumFractionDigits: 1});
+
+    const formattedTotal = parseFloat(totalCostVal).toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+
+    // Build Exact Message Format
+    let reportText = `*HLP REPORT*\n`;
+    reportText += ` Date ${formattedDate}\n`;
+    reportText += `*Elect. Unit.${numEUnits.toLocaleString()}\n`;
+    reportText += `*Rate/unit:-* ${numERate}\n`;
+    reportText += `Cost *  ksh ${eCost}\n\n`;
+
+    reportText += `*Water NCC.${numWNccUnits.toLocaleString()}\n`;
+    reportText += `*Rate/cm3:-* ${numWNccRate}\n`;
+    reportText += `Cost  ksh ${wNccCost}\n\n`;
+
+    reportText += `*Water borehole:${numWBhUnits.toLocaleString()}\n`;
+    reportText += `*Rate/kl:-* ${numWBhRate}\n`;
+    reportText += `Cost*  ksh ${wBhCost}\n\n`;
+
+    reportText += `*LPG\n`;
+    reportText += ` *Rate/kg* 18.5\n`;
+    reportText += `*Total:${lpgScm}\n`;
+    reportText += `*Rate/SCM:* ${numLpgRate}\n`;
+    reportText += `Cost*  ksh ${lpgCost}\n\n`;
+
+    reportText += `*Diesel:*${numDUnits.toLocaleString()}\n`;
+    reportText += `*Rate/ltr:* ${numDRate}\n`;
+    reportText += `Cost  ksh. ${dCost}\n\n`;
+
+    reportText += ` Total  ksh ${formattedTotal}`;
+
+    // Target testing number: 0795554211 -> International format 254795554211
+    const targetPhone = "254795554211";
+    const encodedMessage = encodeURIComponent(reportText);
+    window.open(`https://wa.me/${targetPhone}?text=${encodedMessage}`, '_blank');
+}
+</script>
+{% endblock %}
