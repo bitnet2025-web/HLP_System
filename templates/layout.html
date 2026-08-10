@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Four Points — HLP System</title>
     
-    <!-- PWA Installation Link -->
+    <!-- PWA & Mobile App Icons -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon" type="image/png" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
+    <link rel="apple-touch-icon" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
+    <meta name="theme-color" content="#800000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=3">
     <style>
-
         :root {
             --maroon: #800000;
             --gold: #d4af37;
@@ -27,6 +31,35 @@
             background: var(--light-bg);
             display: flex;
             min-height: 100vh;
+        }
+
+        /* Direct Mobile Overrides inside layout template */
+        @media screen and (max-width: 768px) {
+            body {
+                display: block !important;
+                width: 100vw !important;
+                overflow-x: hidden !important;
+            }
+            
+            .sidebar, nav, header {
+                width: 100% !important;
+                position: relative !important;
+                height: auto !important;
+            }
+
+            .main-content, .content, container, main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 10px !important;
+                box-sizing: border-box !important;
+            }
+
+            table {
+                display: block !important;
+                width: 100% !important;
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+            }
         }
 
         /* --- SIDEBAR NAV STYLING --- */
