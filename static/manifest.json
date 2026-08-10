@@ -3,15 +3,15 @@
   "name": "Four Points — HLP Operations System",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1043/1043503.png",
+      "src": "https://storage.googleapis.com/hlp-images/HLP-Icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#1a252f",
-  "theme_color": "#800000",
+  "background_color": "#111827",
+  "theme_color": "#0d47a1",
   "display": "standalone",
   "orientation": "portrait"
 }
