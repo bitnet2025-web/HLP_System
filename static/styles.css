@@ -670,3 +670,54 @@ main {
     -webkit-overflow-scrolling: touch;
   }
 }
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERRIDES (Fixes oversized numbers & messy layouts)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+
+    /* --- 1. Scale down giant numbers & dashboard cards --- */
+    .stat-card, .metric-card, .card {
+        padding: 12px 15px !important;
+        margin-bottom: 12px !important;
+        border-radius: 8px !important;
+    }
+
+    .stat-number, .metric-value, h1, h2 {
+        font-size: 1.5rem !important; /* Forces oversized numbers to fit */
+        line-height: 1.2 !important;
+    }
+
+    h3, .card-title {
+        font-size: 1.1rem !important;
+    }
+
+    /* --- 2. Clean up section grids & layout organization --- */
+    .dashboard-grid, .form-grid, .grid, .row, 
+    div[style*="display: grid"], div[style*="display: flex"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    /* --- 3. Input fields & form controls --- */
+    input[type="text"], input[type="number"], input[type="date"], 
+    input[type="time"], select, textarea {
+        width: 100% !important;
+        font-size: 1rem !important; /* Prevents iOS auto-zoom on focus */
+        padding: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* --- 4. Tables & data lists --- */
+    .table-responsive, table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        font-size: 0.85rem !important;
+    }
+
+    th, td {
+        padding: 8px 10px !important;
+    }
+}

@@ -1,19 +1,21 @@
 {
   "short_name": "HLP System",
-  "name": "Four Points — HLP Operations System",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#1a252f",
-  "theme_color": "#800000",
+  "name": "Four Points HLP System",
   "icons": [
     {
       "src": "https://storage.googleapis.com/hlp-images/HLP-Icon.png",
-      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://storage.googleapis.com/hlp-images/HLP-Icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "start_url": "/",
+  "background_color": "#1a252f",
+  "theme_color": "#800000",
+  "display": "standalone",
+  "orientation": "portrait"
 }
