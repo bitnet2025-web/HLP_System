@@ -388,9 +388,15 @@ def inject_pending_counts():
 # SYSTEM ROUTES
 # =====================
 
+from flask import send_from_directory
+
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json')
+
 @app.route('/service-worker.js')
-def service_worker():
-    return app.send_static_file('service-worker.js')
+def serve_service_worker():
+    return send_from_directory('static', 'service-worker.js')
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
 def login():

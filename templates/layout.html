@@ -6,7 +6,7 @@
     <title>Four Points — HLP System</title>
     
     <!-- PWA & Mobile App Settings -->
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
     <link rel="apple-touch-icon" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
     
@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-title" content="HLP System">
     <meta name="application-name" content="HLP System">
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=5">
     
     <style>
         :root {
@@ -32,13 +32,46 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--light-bg);
             display: flex;
             min-height: 100vh;
         }
 
-        /* --- DESKTOP SIDEBAR NAV STYLING --- */
+        /* --- MOBILE TOP NAVIGATION BAR --- */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: var(--maroon);
+            color: white;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 1001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .mobile-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .menu-toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.6rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        /* --- SIDEBAR NAV STYLING --- */
         .app-sidebar {
             width: var(--sidebar-width);
             background: var(--dark-bg);
@@ -49,8 +82,9 @@
             left: 0;
             display: flex;
             flex-direction: column;
-            z-index: 1000;
+            z-index: 1002;
             box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease-in-out;
         }
 
         .sidebar-brand {
@@ -108,7 +142,7 @@
             gap: 8px;
         }
 
-        /* --- DESKTOP MAIN LAYOUT WRAPPER --- */
+        /* --- MAIN CONTENT AREA --- */
         .app-main-content {
             margin-left: var(--sidebar-width);
             flex-grow: 1;
@@ -117,7 +151,6 @@
             width: calc(100% - var(--sidebar-width));
         }
 
-        /* Search input components inside sidebar */
         .sidebar-search-form {
             padding: 0 20px 10px 20px;
         }
@@ -132,47 +165,71 @@
             box-sizing: border-box;
         }
 
-        /* --- MOBILE OVERRIDES (MUST BE AT THE VERY BOTTOM OF CSS) --- */
+        /* Mobile Overlay Backdrop */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+
+        /* --- RESPONSIVE MOBILE OVERRIDES --- */
         @media screen and (max-width: 768px) {
-            body {
-                display: block !important;
-                width: 100% !important;
-                overflow-x: hidden !important;
+            .mobile-header {
+                display: flex;
             }
 
             .app-sidebar {
-                position: relative !important;
-                width: 100% !important;
-                height: auto !important;
-                top: auto !important;
-                left: auto !important;
-                bottom: auto !important;
-                box-shadow: none !important;
+                transform: translateX(-100%);
+            }
+
+            .app-sidebar.active {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
             }
 
             .app-main-content {
                 margin-left: 0 !important;
                 width: 100% !important;
-                padding: 15px !important;
+                padding: 70px 15px 20px 15px !important;
             }
 
+            /* Responsive Table Containers */
             table {
-                display: block !important;
-                width: 100% !important;
-                overflow-x: auto !important;
-                white-space: nowrap !important;
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                white-space: nowrap;
             }
         }
 
         @media print {
-            .app-sidebar { display: none !important; }
+            .mobile-header, .app-sidebar, .sidebar-overlay { display: none !important; }
             .app-main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
         }
     </style>
 </head>
 <body>
 
-    <aside class="app-sidebar">
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-header">
+        <h3>FOUR POINTS</h3>
+        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Toggle Menu">☰</button>
+    </header>
+
+    <!-- Overlay Backdrop for Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Navigation Drawer -->
+    <aside class="app-sidebar" id="appSidebar">
         <div class="sidebar-brand">
             <h3>FOUR POINTS</h3>
             <small>BY SHERATON</small>
@@ -228,11 +285,27 @@
     </main>
 
     <script>
+        // Mobile Navigation Toggle Handling
+        const menuToggleBtn = document.getElementById('menuToggleBtn');
+        const appSidebar = document.getElementById('appSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            appSidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        }
+
+        if (menuToggleBtn) {
+            menuToggleBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+        }
+
+        // Service Worker Registration for Native PWA Installation
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register("/service-worker.js")
-                    .then(reg => console.log('PWA Service Worker active! Scope:', reg.scope))
-                    .catch(err => console.log('Service Worker registration error:', err));
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registered:', reg.scope))
+                    .catch(err => console.error('Service Worker registration failed:', err));
             });
         }
     </script>
