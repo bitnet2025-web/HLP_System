@@ -638,3 +638,35 @@ main {
     width: 100% !important;
   }
 }
+/* Ensure mobile containers scale properly without side-scrolling */
+@media screen and (max-width: 768px) {
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+  }
+
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  .sidebar, nav, header {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .content, .main-content, container, .container-fluid {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 12px !important;
+  }
+
+  .table-responsive, table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
