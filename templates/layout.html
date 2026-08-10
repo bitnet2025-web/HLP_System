@@ -15,6 +15,44 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=3">
     <style>
+        @media screen and (max-width: 768px) {
+    /* Force main layout to stack vertically */
+    body, html {
+        display: block !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Convert fixed sidebar to relative top block */
+    .sidebar, #sidebar, div[class*="sidebar"] {
+        position: relative !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        height: auto !important;
+        top: 0 !important;
+        left: 0 !important;
+        float: none !important;
+        margin: 0 0 15px 0 !important;
+    }
+
+    /* Prevent content from tucking under sidebar */
+    .main-content, .content, main, .wrapper, .dashboard-container {
+        position: relative !important;
+        margin-left: 0 !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Make grid layouts single-column on mobile */
+    .grid, .dashboard-grid, .card-deck, .row {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+}
         :root {
             --maroon: #800000;
             --gold: #d4af37;
@@ -225,9 +263,9 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
-        .then(reg => console.log('Service Worker registered!'))
-        .catch(err => console.log('Service Worker failed:', err));
+      navigator.serviceWorker.register("/service-worker.js")
+        .then(reg => console.log('PWA Service Worker active!'))
+        .catch(err => console.log('Service Worker registration error:', err));
     });
   }
 </script>

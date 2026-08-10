@@ -388,7 +388,9 @@ def inject_pending_counts():
 # SYSTEM ROUTES
 # =====================
 
-
+@app.route('/service-worker.js')
+def service_worker():
+    return app.send_static_file('service-worker.js')
 @app.route("/", methods=["GET", "POST"])
 @app.route("/login", methods=["GET", "POST"])
 def login():
