@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Four Points — HLP System</title>
     
-    <!-- PWA & Mobile App Settings -->
+    <!-- PWA Settings -->
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
     <link rel="apple-touch-icon" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
@@ -17,9 +17,10 @@
     <meta name="apple-mobile-web-app-title" content="HLP System">
     <meta name="application-name" content="HLP System">
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=5">
-    
     <style>
+        /* ==========================================================================
+           1. CORE SYSTEM VARIABLES & DESKTOP STYLES
+           ========================================================================== */
         :root {
             --maroon: #800000;
             --gold: #d4af37;
@@ -29,49 +30,25 @@
             --sidebar-width: 260px;
         }
 
-        body {
+        *, *:before, *:after {
+            box-sizing: border-box;
+        }
+
+        html, body {
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--light-bg);
-            display: flex;
+            color: #333;
             min-height: 100vh;
+            width: 100%;
         }
 
-        /* --- MOBILE TOP NAVIGATION BAR --- */
-        .mobile-header {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 56px;
-            background: var(--maroon);
-            color: white;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            z-index: 1001;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        body {
+            display: flex;
         }
 
-        .mobile-header h3 {
-            margin: 0;
-            font-size: 1.1rem;
-            color: white;
-            letter-spacing: 1px;
-        }
-
-        .menu-toggle-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.6rem;
-            cursor: pointer;
-            padding: 4px 8px;
-        }
-
-        /* --- SIDEBAR NAV STYLING --- */
+        /* --- DESKTOP SIDEBAR --- */
         .app-sidebar {
             width: var(--sidebar-width);
             background: var(--dark-bg);
@@ -132,6 +109,17 @@
             border-left-color: var(--gold);
         }
 
+        .sidebar-search-form { padding: 0 20px 10px 20px; }
+        .sidebar-search-form input {
+            width: 100%;
+            padding: 8px;
+            background: #2c3e50;
+            border: 1px solid #34495e;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
         .sidebar-user {
             padding: 15px 20px;
             background: rgba(0,0,0,0.2);
@@ -142,72 +130,141 @@
             gap: 8px;
         }
 
-        /* --- MAIN CONTENT AREA --- */
+        /* --- MAIN CONTENT CONTAINER --- */
         .app-main-content {
             margin-left: var(--sidebar-width);
             flex-grow: 1;
             padding: 30px;
-            box-sizing: border-box;
             width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
         }
 
-        .sidebar-search-form {
-            padding: 0 20px 10px 20px;
-        }
-        .sidebar-search-form input {
-            width: 100%;
-            padding: 8px;
-            background: #2c3e50;
-            border: 1px solid #34495e;
-            color: white;
-            border-radius: 4px;
-            font-size: 0.85em;
-            box-sizing: border-box;
-        }
+        /* Mobile Header & Overlay (Hidden on Desktop) */
+        .mobile-header { display: none; }
+        .sidebar-overlay { display: none; }
 
-        /* Mobile Overlay Backdrop */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1001;
-        }
-
-        /* --- RESPONSIVE MOBILE OVERRIDES --- */
+        /* ==========================================================================
+           2. GUARANTEED UNIFIED MOBILE OVERRIDES (Screens <= 768px)
+           ========================================================================== */
         @media screen and (max-width: 768px) {
-            .mobile-header {
-                display: flex;
+            html, body {
+                overflow-x: hidden !important;
+                position: relative;
             }
 
+            /* Top Mobile Navigation Bar */
+            .mobile-header {
+                display: flex !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 56px;
+                background: var(--maroon);
+                color: white;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 16px;
+                z-index: 1001;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+
+            .mobile-header h3 {
+                margin: 0;
+                font-size: 1.05rem;
+                color: white;
+                letter-spacing: 1px;
+            }
+
+            .menu-toggle-btn {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.6rem;
+                cursor: pointer;
+                padding: 4px 8px;
+            }
+
+            /* Off-Canvas Slide Drawer Sidebar */
             .app-sidebar {
                 transform: translateX(-100%);
+                top: 0;
+                bottom: 0;
+                width: 270px;
             }
 
             .app-sidebar.active {
                 transform: translateX(0);
             }
 
-            .sidebar-overlay.active {
-                display: block;
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1001;
             }
 
+            .sidebar-overlay.active {
+                display: block !important;
+            }
+
+            /* Main Content Container Reset */
             .app-main-content {
                 margin-left: 0 !important;
                 width: 100% !important;
-                padding: 70px 15px 20px 15px !important;
+                max-width: 100vw !important;
+                padding: 68px 12px 20px 12px !important;
             }
 
-            /* Responsive Table Containers */
+            /* Global Typography & Number Scaling */
+            h1, .h1 { font-size: 1.35rem !important; }
+            h2, .h2 { font-size: 1.2rem !important; }
+            h3, .h3 { font-size: 1.05rem !important; }
+
+            /* Clamp Oversized Numbers Across Dashboard & Reading Tools */
+            .stat-number, .metric-value, .card-number,
+            [style*="font-size: 2"], [style*="font-size: 3"], [style*="font-size: 2em"], [style*="font-size: 3em"] {
+                font-size: 1.4rem !important;
+                line-height: 1.2 !important;
+            }
+
+            /* Force All Layout Grids into Clean Single Columns */
+            .dashboard-grid, .form-grid, .grid, .row,
+            div[style*="display: grid"], 
+            div[style*="display: flex"]:not(.mobile-header):not(.sidebar-user) {
+                display: flex !important;
+                flex-direction: column !important;
+                grid-template-columns: 1fr !important;
+                width: 100% !important;
+                gap: 12px !important;
+            }
+
+            /* Card Containers */
+            .card, .stat-card, .metric-card, .dash-card, .panel {
+                width: 100% !important;
+                margin: 0 0 10px 0 !important;
+                padding: 14px !important;
+            }
+
+            /* Tables Touch Container */
             table {
-                display: block;
-                width: 100%;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                white-space: nowrap;
+                display: block !important;
+                width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                white-space: nowrap !important;
+            }
+
+            /* Form Elements (Standard 16px prevents mobile auto-zoom) */
+            input[type="text"], input[type="number"], input[type="date"], 
+            input[type="time"], select, textarea {
+                width: 100% !important;
+                font-size: 16px !important;
+                padding: 10px !important;
             }
         }
 
@@ -219,16 +276,16 @@
 </head>
 <body>
 
-    <!-- Mobile Top Navigation Bar -->
+    <!-- Mobile Top Header Bar -->
     <header class="mobile-header">
         <h3>FOUR POINTS</h3>
-        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Toggle Menu">☰</button>
+        <button class="menu-toggle-btn" id="menuToggleBtn" aria-label="Toggle Navigation Menu">☰</button>
     </header>
 
-    <!-- Overlay Backdrop for Sidebar -->
+    <!-- Overlay Backdrop for Mobile Menu -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Sidebar Navigation Drawer -->
+    <!-- Sidebar Navigation -->
     <aside class="app-sidebar" id="appSidebar">
         <div class="sidebar-brand">
             <h3>FOUR POINTS</h3>
@@ -239,7 +296,7 @@
             <li class="menu-label">Search Archives</li>
             <div class="sidebar-search-form">
                 <form action="{{ url_for('dashboard') }}" method="GET">
-                    <input type="date" name="search_date" onchange="this.form.submit()" title="Choose target historical file tracking date">
+                    <input type="date" name="search_date" onchange="this.form.submit()" title="Choose target date">
                 </form>
             </div>
 
@@ -264,6 +321,7 @@
         </div>
     </aside>
 
+    <!-- Main Dynamic Content Area -->
     <main class="app-main-content">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -285,7 +343,7 @@
     </main>
 
     <script>
-        // Mobile Navigation Toggle Handling
+        // Drawer Toggle Logic
         const menuToggleBtn = document.getElementById('menuToggleBtn');
         const appSidebar = document.getElementById('appSidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -300,12 +358,12 @@
             sidebarOverlay.addEventListener('click', toggleSidebar);
         }
 
-        // Service Worker Registration for Native PWA Installation
+        // Service Worker Registration for PWA Installation
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered:', reg.scope))
-                    .catch(err => console.error('Service Worker registration failed:', err));
+                    .then(reg => console.log('PWA Service Worker Active:', reg.scope))
+                    .catch(err => console.error('PWA Registration Error:', err));
             });
         }
     </script>
