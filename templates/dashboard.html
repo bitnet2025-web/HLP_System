@@ -1,40 +1,149 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    .dashboard-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 15px;
+    }
 
-<div class="page-title">
-  <h2>Engineering Dashboard</h2>
-  <p>Welcome, <strong>{{ user|default(session.user if session else '') }}</strong> (<span style="color: var(--gold);">{{ role|default(session.role if session else '') }}</span>)</p>
+    .page-title {
+        margin-bottom: 25px;
+        border-bottom: 2px solid var(--gold, #d4af37);
+        padding-bottom: 12px;
+    }
+
+    .page-title h2 {
+        margin: 0 0 6px 0;
+        color: var(--maroon, #800000);
+        font-size: 1.75rem;
+    }
+
+    .page-title p {
+        margin: 0;
+        color: #555;
+        font-size: 0.95rem;
+    }
+
+    .role-badge {
+        color: var(--gold, #d4af37);
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .dash-card {
+        display: block;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 24px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .dash-card:hover, .dash-card:focus {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        border-color: var(--maroon, #800000);
+    }
+
+    .dash-card:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .dash-card h3 {
+        margin: 0 0 8px 0;
+        color: var(--maroon, #800000);
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dash-card p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    /* Distinct Accent Borders for Dashboard Modules */
+    .dash-card.admin { border-left: 5px solid #2c3e50; }
+    .dash-card.ppm { border-left: 5px solid #e67e22; }
+    .dash-card.requisitions { border-left: 5px solid #27ae60; }
+    .dash-card.handover { border-left: 5px solid #2980b9; }
+    .dash-card.calculator { border-left: 5px solid #8e44ad; }
+
+    /* Mobile Adaptations */
+    @media (max-width: 600px) {
+        .dashboard-container {
+            padding: 12px;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .dash-card {
+            padding: 18px;
+        }
+
+        .dash-card h3 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="page-title">
+        <h2>Engineering Dashboard</h2>
+        <p>
+            Welcome, <strong>{{ user|default(session.user if session else '') }}</strong> 
+            (<span class="role-badge">{{ role|default(session.role if session else '') }}</span>)
+        </p>
+    </div>
+
+    <div class="dashboard-grid">
+
+        {% if (role|default(session.role if session else '')) == "ADMIN" %}
+        <a href="{{ url_for('dash_admin') }}" class="dash-card admin">
+            <h3>⚙️ Admin Console</h3>
+            <p>System control & rate management</p>
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('ppm_hub') }}" class="dash-card ppm">
+            <h3>🛠️ PPM Management Desk</h3>
+            <p>Planned preventative maintenance schedules</p>
+        </a>
+
+        <a href="{{ url_for('material_requisition') }}" class="dash-card requisitions">
+            <h3>📋 Material Requisition</h3>
+            <p>Request parts, tools & engineering supplies</p>
+        </a>
+
+        <a href="{{ url_for('handover_hub') }}" class="dash-card handover">
+            <h3>🔄 Major Handover Hub</h3>
+            <p>Shift handovers & pending maintenance logs</p>
+        </a>
+
+        <a href="{{ url_for('hlp_calculator') }}" class="dash-card calculator">
+            <h3>🧮 HLP Calculator</h3>
+            <p>Utility consumption & financial metrics</p>
+        </a>
+
+    </div>
 </div>
-
-<div class="dashboard-grid">
-
-  {% if (role|default(session.role if session else '')) == "ADMIN" %}
-  <a href="{{ url_for('dash_admin') }}" class="dash-card admin">
-    <h3>Admin Console</h3>
-    <p>System control & rates</p>
-  </a>
-  {% endif %}
-
-  <a href="{{ url_for('ppm_hub') }}" class="dash-card ppm">
-    <h3>🛠️ PPM Management Desk</h3>
-    <p>Planned preventative maintenance</p>
-  </a>
-
-  <a href="{{ url_for('material_requisition') }}" class="dash-card requisitions">
-    <h3>📋 Material Requisition</h3>
-    <p>Request parts & supplies</p>
-  </a>
-
-  <a href="{{ url_for('handover_hub') }}" class="dash-card handover">
-    <h3>🔄 Major Handover Hub</h3>
-    <p>Shift handovers & pending logs</p>
-  </a>
-
-  <a href="{{ url_for('hlp_calculator') }}" class="dash-card calculator">
-    <h3>🧮 HLP Calculator</h3>
-    <p>Utility consumption metrics</p>
-  </a>
-
-</div>
-
 {% endblock %}

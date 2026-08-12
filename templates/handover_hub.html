@@ -2,98 +2,255 @@
 {% block content %}
 
 <style>
-    .hub-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: start; }
-    .form-card, .log-card-hub { background: white; padding: 25px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .hub-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 15px;
+    }
+
+    .hub-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 2fr; 
+        gap: 25px; 
+        align-items: start; 
+    }
+
+    .form-card, .log-card-hub { 
+        background: white; 
+        padding: 24px; 
+        border-radius: 8px; 
+        border: 1px solid #ddd; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+    }
     
-    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
-    .form-group label { font-weight: bold; font-size: 0.9em; color: var(--navy); }
-    .form-group select, .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+    .form-group { 
+        margin-bottom: 16px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 6px; 
+    }
+
+    .form-group label { 
+        font-weight: bold; 
+        font-size: 0.9em; 
+        color: var(--dark, #1f2933); 
+    }
+
+    .form-group select, .form-group textarea { 
+        width: 100%;
+        padding: 10px 12px; 
+        border: 1px solid #ccc; 
+        border-radius: 6px; 
+        font-family: inherit; 
+        font-size: 16px; /* Prevents auto-zoom on mobile */
+        box-sizing: border-box;
+    }
     
-    .hub-title { color: var(--maroon); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .hub-title { 
+        color: var(--maroon, #800000); 
+        margin-top: 0; 
+        border-bottom: 2px solid var(--gold, #c9a24d); 
+        padding-bottom: 10px; 
+        font-size: 1.25rem;
+    }
     
     /* Handover Feeds Layout */
-    .feed-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
-    .feed-item { padding: 15px; border-radius: 6px; border-left: 5px solid #ccc; background: #fdfdfd; border: 1px solid #e0e0e0; border-left-width: 6px; position: relative; }
-    
-    .status-pending { border-left-color: #ffc107; background: #fffde6; }
-    .status-done { border-left-color: var(--success); background: #f4fbf6; }
+    .feed-container { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 15px; 
+        margin-top: 15px; 
+    }
 
-    .badge-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75em; text-transform: uppercase; }
-    .bg-pending { background: #ffeeba; color: #856404; }
-    .bg-done { background: #c3e6cb; color: #155724; }
+    .feed-item { 
+        padding: 16px; 
+        border-radius: 6px; 
+        background: #fdfdfd; 
+        border: 1px solid #e0e0e0; 
+        border-left: 6px solid #ccc; 
+        position: relative; 
+    }
     
-    .chk-container { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-    .chk-box-submit { width: 20px; height: 20px; cursor: pointer; }
+    .status-pending { 
+        border-left-color: #ffc107; 
+        background: #fffde6; 
+    }
+
+    .status-done { 
+        border-left-color: #28a745; 
+        background: #f4fbf6; 
+    }
+
+    .badge-status { 
+        display: inline-block; 
+        padding: 3px 8px; 
+        border-radius: 4px; 
+        font-weight: bold; 
+        font-size: 0.75em; 
+        text-transform: uppercase; 
+    }
+
+    .bg-pending { 
+        background: #ffeeba; 
+        color: #856404; 
+    }
+
+    .bg-done { 
+        background: #c3e6cb; 
+        color: #155724; 
+    }
+    
+    .feed-header {
+        display: flex; 
+        justify-content: space-between; 
+        align-items: flex-start; 
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .feed-footer {
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        gap: 10px;
+        margin-top: 15px; 
+        padding-top: 10px; 
+        border-top: 1px dashed #e0e0e0; 
+        font-size: 0.85em; 
+        color: #666;
+    }
+
+    .chk-container { 
+        display: flex; 
+        align-items: center; 
+        gap: 8px; 
+        cursor: pointer; 
+    }
+
+    .chk-box-submit { 
+        width: 20px; 
+        height: 20px; 
+        cursor: pointer; 
+    }
+
+    .btn-action {
+        background: var(--maroon, #800000); 
+        color: white; 
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 850px) {
+        .hub-container {
+            padding: 10px;
+        }
+
+        .hub-grid { 
+            grid-template-columns: 1fr; 
+            gap: 20px; 
+        }
+
+        .form-card, .log-card-hub {
+            padding: 16px;
+        }
+
+        .feed-header, .feed-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .feed-footer {
+            margin-top: 12px;
+        }
+    }
 </style>
 
-<div class="hub-grid">
-    
-    <div class="form-card">
-        <h3 class="hub-title">📝 Log New Handover</h3>
-        <form action="{{ url_for('handover_hub') }}" method="POST">
-            <div class="form-group">
-                <label>Operational Department Section</label>
-                <select name="section" required>
-                    <option value="ELECTRICAL">Electrical & Power Section</option>
-                    <option value="PLUMBING">Plumbing & Water Management</option>
-                    <option value="HVAC">HVAC & Refrigeration</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Handover Instructions / Work Executed</label>
-                <textarea name="handover_text" rows="6" placeholder="Describe the ongoing tasks, critical plant statuses, or pending issues for the next team shift..." required></textarea>
-            </div>
-            
-            <button type="submit" class="btn-action" style="background: var(--maroon); color: white; width: 100%; justify-content: center;">
-                🚀 Broadcast Shift Handover
-            </button>
-        </form>
-    </div>
-
-    <div class="log-card-hub">
-        <h3 class="hub-title">📋 Live Operational Handover Logs</h3>
+<div class="hub-container">
+    <div class="hub-grid">
         
-        <div class="feed-container">
-            {% for item in handovers %}
-                <div class="feed-item {% if item.status == 'Done' %}status-done{% else %}status-pending{% endif %}">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                        <div>
-                            <span class="badge-status {% if item.status == 'Done' %}bg-done{% else %}bg-pending{% endif %}">
-                                {{ item.status }}
-                            </span>
-                            <strong style="margin-left: 8px; color: var(--navy);">[{{ item.section }}]</strong>
-                        </div>
-                        <small style="color: #777;">Date: {{ item.report_date }}</small>
-                    </div>
-                    
-                    <p style="margin: 10px 0; font-size: 0.95em; color: #333; line-height: 1.5; white-space: pre-wrap;">{{ item.handover_text }}</p>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #e0e0e0; font-size: 0.82em; color: #666;">
-                        <div>Logged by: <strong>{{ item.technician_name }}</strong></div>
-                        
-                        <div>
-                            {% if user_role in ['SUPERVISOR', 'ADMIN'] %}
-                                <form action="{{ url_for('toggle_handover', item_id=item.id) }}" method="POST" style="margin:0;">
-                                    <label class="chk-container">
-                                        <input type="checkbox" class="chk-box-submit" onchange="this.form.submit()" {% if item.status == 'Done' %}checked{% endif %}>
-                                        <strong>Mark Done</strong>
-                                    </label>
-                                </form>
-                            {% else %}
-                                {% if item.status == 'Done' %}
-                                    <span style="color: var(--success);">Checked off by {{ item.resolved_by }}</span>
-                                {% else %}
-                                    <span style="color: #999; font-style: italic;">Awaiting Supervisor Sign-off</span>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                    </div>
+        <!-- Form Panel -->
+        <div class="form-card">
+            <h3 class="hub-title">📝 Log New Handover</h3>
+            <form action="{{ url_for('handover_hub') }}" method="POST">
+                <div class="form-group">
+                    <label>Operational Department Section</label>
+                    <select name="section" required>
+                        <option value="ELECTRICAL">Electrical & Power Section</option>
+                        <option value="PLUMBING">Plumbing & Water Management</option>
+                        <option value="HVAC">HVAC & Refrigeration</option>
+                    </select>
                 </div>
-            {% else %}
-                <p style="text-align: center; color: #888; font-style: italic; padding: 30px 0;">No operational shift handovers tracked in this log cycle.</p>
-            {% endfor %}
+                
+                <div class="form-group">
+                    <label>Handover Instructions / Work Executed</label>
+                    <textarea name="handover_text" rows="6" placeholder="Describe ongoing tasks, critical plant statuses, or pending issues for the next shift..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-action">
+                    🚀 Broadcast Shift Handover
+                </button>
+            </form>
         </div>
+
+        <!-- Logs Panel -->
+        <div class="log-card-hub">
+            <h3 class="hub-title">📋 Live Operational Handover Logs</h3>
+            
+            <div class="feed-container">
+                {% for item in handovers %}
+                    <div class="feed-item {% if item.status == 'Done' %}status-done{% else %}status-pending{% endif %}">
+                        
+                        <div class="feed-header">
+                            <div>
+                                <span class="badge-status {% if item.status == 'Done' %}bg-done{% else %}bg-pending{% endif %}">
+                                    {{ item.status }}
+                                </span>
+                                <strong style="margin-left: 6px; color: var(--dark, #1f2933);">[{{ item.section }}]</strong>
+                            </div>
+                            <small style="color: #777;">Date: {{ item.report_date }}</small>
+                        </div>
+                        
+                        <p style="margin: 10px 0; font-size: 0.95em; color: #333; line-height: 1.5; white-space: pre-wrap;">{{ item.handover_text }}</p>
+                        
+                        <div class="feed-footer">
+                            <div>Logged by: <strong>{{ item.technician_name }}</strong></div>
+                            
+                            <div>
+                                {% if user_role in ['SUPERVISOR', 'ADMIN'] %}
+                                    <form action="{{ url_for('toggle_handover', item_id=item.id) }}" method="POST" style="margin:0;">
+                                        <label class="chk-container">
+                                            <input type="checkbox" class="chk-box-submit" onchange="this.form.submit()" {% if item.status == 'Done' %}checked{% endif %}>
+                                            <strong>Mark Done</strong>
+                                        </label>
+                                    </form>
+                                {% else %}
+                                    {% if item.status == 'Done' %}
+                                        <span style="color: #28a745; font-weight: bold;">Checked off by {{ item.resolved_by }}</span>
+                                    {% else %}
+                                        <span style="color: #888; font-style: italic;">Awaiting Supervisor Sign-off</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+                {% else %}
+                    <p style="text-align: center; color: #888; font-style: italic; padding: 30px 0;">No operational shift handovers tracked in this log cycle.</p>
+                {% endfor %}
+            </div>
+        </div>
+
     </div>
 </div>
 

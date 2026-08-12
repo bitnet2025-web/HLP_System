@@ -1,70 +1,196 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="admin-container" style="max-width: 1100px; margin: auto; padding: 20px;">
-    
-    <h2 style="color: var(--maroon); border-bottom: 2px solid var(--gold); padding-bottom: 10px;">
-        Admin Control Center
-    </h2>
+<style>
+    .admin-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px;
+    }
 
-    <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+    .admin-title {
+        color: var(--maroon);
+        border-bottom: 2px solid var(--gold);
+        padding-bottom: 10px;
+        margin-top: 0;
+        font-size: 1.5rem;
+    }
+
+    .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .panel {
+        background: white;
+        border: 1px solid #ddd;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        height: fit-content;
+    }
+
+    .panel h3 {
+        color: var(--maroon);
+        margin-top: 0;
+        margin-bottom: 8px;
+    }
+
+    .panel p {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px; /* Prevents auto-zoom on mobile */
+        box-sizing: border-box;
+    }
+
+    .btn-admin {
+        background: var(--maroon);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        font-weight: bold;
+        font-size: 1rem;
+        transition: background 0.2s ease;
+    }
+
+    .btn-admin:hover {
+        background: #6e1622;
+    }
+
+    .btn-secondary-admin {
+        background: #2c3e50;
+    }
+
+    .btn-secondary-admin:hover {
+        background: #1a252f;
+    }
+
+    .shortcut-box {
+        margin-top: 30px;
+        background: #fdfdfd;
+        padding: 20px;
+        border: 1px dashed #ccc;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    .shortcut-link {
+        color: var(--maroon);
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+        padding: 8px 12px;
+    }
+
+    /* Mobile Fine-Tuning */
+    @media (max-width: 768px) {
+        .admin-container {
+            padding: 10px;
+        }
+
+        .admin-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .panel {
+            padding: 16px;
+        }
+    }
+</style>
+
+<div class="admin-container">
+    <h2 class="admin-title">Admin Control Center</h2>
+
+    <div class="admin-grid">
         
-        <div class="panel" style="background: white; border: 1px solid #ddd; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3 style="color: var(--maroon); margin-top:0;">💰 Financial Settings</h3>
-            <p style="font-size: 0.9em; color: #666;">Set the unit costs used for the Daily Master HLP Calculator.</p>
-            <hr>
+        <!-- Panel 1: Financial Settings -->
+        <div class="panel">
+            <h3>💰 Financial Settings</h3>
+            <p>Set the unit costs used for the Daily Master HLP Calculator.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 15px;">
+            
             <form method="POST">
                 <input type="hidden" name="action" value="update_rates">
                 
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">Electricity Rate (Ksh/kWh)</label>
-                    <input type="number" step="0.01" name="elec_rate" value="{{ rates.electricity }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                <div class="form-group">
+                    <label>Electricity Rate (Ksh/kWh)</label>
+                    <input type="number" step="0.01" name="elec_rate" value="{{ rates.electricity }}" class="form-control" required>
                 </div>
                 
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">NCC Water Rate (Ksh/m³)</label>
-                    <input type="number" step="0.01" name="ncc_rate" value="{{ rates.ncc }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                <div class="form-group">
+                    <label>NCC Water Rate (Ksh/m³)</label>
+                    <input type="number" step="0.01" name="ncc_rate" value="{{ rates.ncc }}" class="form-control" required>
                 </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">Borehole Water Rate (Ksh/m³)</label>
-                    <input type="number" step="0.01" name="borehole_rate" value="{{ rates.borehole }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                <div class="form-group">
+                    <label>Borehole Water Rate (Ksh/m³)</label>
+                    <input type="number" step="0.01" name="borehole_rate" value="{{ rates.borehole }}" class="form-control" required>
                 </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">Diesel Rate (Ksh/L)</label>
-                    <input type="number" step="0.01" name="diesel_rate" value="{{ rates.diesel }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                <div class="form-group">
+                    <label>Diesel Rate (Ksh/L)</label>
+                    <input type="number" step="0.01" name="diesel_rate" value="{{ rates.diesel }}" class="form-control" required>
                 </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">LPG Gas Rate (Ksh/Kg)</label>
-                    <input type="number" step="0.01" name="lpg_rate" value="{{ rates.lpg }}" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                <div class="form-group">
+                    <label>LPG Gas Rate (Ksh/Kg)</label>
+                    <input type="number" step="0.01" name="lpg_rate" value="{{ rates.lpg }}" class="form-control" required>
                 </div>
 
-                <button type="submit" style="background: var(--maroon); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                <button type="submit" class="btn-admin">
                     Save Global Rates
                 </button>
             </form>
         </div>
 
-        <div class="panel" style="background: white; border: 1px solid #ddd; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content;">
-            <h3 style="color: var(--maroon); margin-top:0;">🔑 Security & Access</h3>
-            <p style="font-size: 0.9em; color: #666;">Force password changes for system users.</p>
-            <hr>
+        <!-- Panel 2: Security & Access -->
+        <div class="panel">
+            <h3>🔑 Security & Access</h3>
+            <p>Force password changes for system users.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 15px;">
+            
             <form method="POST">
                 <input type="hidden" name="action" value="reset_password">
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">Select User</label>
-                    <select name="target_user" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                
+                <div class="form-group">
+                    <label>Select User</label>
+                    <select name="target_user" class="form-control" required>
                         <option value="admin">Admin</option>
                         <option value="supervisor">Supervisor</option>
                         <option value="technician">Technician</option>
                     </select>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; font-weight:bold;">New Password</label>
-                    <input type="password" name="new_password" placeholder="Enter new password" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px;" required>
+                
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="new_password" placeholder="Enter new password" class="form-control" required>
                 </div>
-                <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+
+                <button type="submit" class="btn-admin btn-secondary-admin">
                     Update Password
                 </button>
             </form>
@@ -72,9 +198,9 @@
 
     </div>
 
-    <div style="margin-top: 30px; background: #fdfdfd; padding: 20px; border: 1px dashed #ccc; text-align: center; border-radius: 8px;">
-        <h4 style="margin-top:0; color: var(--navy);">System Shortcuts</h4>
-        <a href="{{ url_for('material_requisition') }}" style="color: var(--maroon); font-weight: bold; text-decoration: none;">📦 Manage Requisitions</a>
+    <div class="shortcut-box">
+        <h4 style="margin: 0 0 8px 0; color: var(--dark);">System Shortcuts</h4>
+        <a href="{{ url_for('material_requisition') }}" class="shortcut-link">📦 Manage Requisitions</a>
     </div>
 </div>
 {% endblock %}

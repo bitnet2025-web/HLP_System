@@ -1,40 +1,42 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="login-wrapper" style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
-    <div class="dash-card" style="width: 100%; max-width: 400px; border-left: 6px solid var(--maroon);">
-        <div class="dashboard-header">
-            <h2>Sign In</h2>
-            <p style="font-size: 14px; opacity: 0.7;">HLP Management System</p>
+<div class="login-wrapper" style="display: flex; align-items: center; justify-content: center; min-height: 70vh; padding: 20px 15px; box-sizing: border-box;">
+    <div class="dash-card" style="width: 100%; max-width: 420px; border-left: 6px solid var(--maroon, #800000); background: #ffffff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); box-sizing: border-box;">
+        
+        <div class="dashboard-header" style="margin-bottom: 20px; border-bottom: 2px solid var(--gold, #d4af37); padding-bottom: 10px;">
+            <h2 style="margin: 0; color: var(--maroon, #800000); font-size: 1.6rem;">Sign In</h2>
+            <p style="font-size: 14px; color: #666; margin-top: 5px; font-weight: 600;">HLP Management System</p>
         </div>
 
         <form method="POST" action="{{ url_for('login') }}">
             <div style="margin-bottom: 15px;">
-                <label style="font-weight: 600; font-size: 14px;">Username</label>
+                <label style="font-weight: 600; font-size: 14px; color: var(--navy, #1f2933); display: block; margin-bottom: 5px;">Username</label>
                 <input type="text" name="username" placeholder="Enter username" required 
-                       style="background: #f9f9f9; border: 1px solid #ddd; padding: 12px; width: 100%; box-sizing: border-box; border-radius: 4px;">
+                       style="background: #f9f9f9; border: 1px solid #ccc; padding: 12px; width: 100%; box-sizing: border-box; border-radius: 4px; font-size: 16px;">
             </div>
 
             <div style="margin-bottom: 20px;">
-                <label style="font-weight: 600; font-size: 14px;">Password</label>
+                <label style="font-weight: 600; font-size: 14px; color: var(--navy, #1f2933); display: block; margin-bottom: 5px;">Password</label>
                 <input type="password" name="password" placeholder="Enter password" required
-                       style="background: #f9f9f9; border: 1px solid #ddd; padding: 12px; width: 100%; box-sizing: border-box; border-radius: 4px;">
+                       style="background: #f9f9f9; border: 1px solid #ccc; padding: 12px; width: 100%; box-sizing: border-box; border-radius: 4px; font-size: 16px;">
             </div>
 
-            <button type="submit" class="btn primary" style="width: 100%; padding: 12px; font-weight: bold; font-size: 16px;">
+            <button type="submit" class="btn primary" style="width: 100%; padding: 12px; font-weight: bold; font-size: 16px; background: var(--maroon, #800000); color: #fff; border: none; border-radius: 4px; cursor: pointer;">
                 Log In
             </button>
         </form>
 
         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
-            <p style="font-size: 12px; color: #999; margin-bottom: 8px;">
+            <p style="font-size: 12px; color: #888; margin-bottom: 8px;">
                 Restricted Access: Authorized Personnel Only
             </p>
-            <div style="font-size: 11px; color: var(--gold); display: flex; flex-direction: column; gap: 4px;">
+            <div style="font-size: 11px; color: var(--gold, #d4af37); display: flex; flex-direction: column; gap: 4px; background: #fafafa; padding: 10px; border-radius: 4px;">
                 <span><strong>Technician Default:</strong> technician / 123</span>
                 <span><strong>Supervisor / Admin:</strong> Standard Credentials</span>
             </div>
         </div>
+
     </div>
 </div>
 

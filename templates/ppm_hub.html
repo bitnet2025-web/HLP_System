@@ -2,62 +2,339 @@
 {% block content %}
 
 <style>
-    .ppm-wrapper { display: flex; flex-direction: column; gap: 25px; }
-    .alert-banner { background: #fff5f5; border: 2px solid #e53e3e; border-left-width: 8px; padding: 15px; border-radius: 6px; }
-    
-    .entry-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-    .card-panel { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
-    .card-panel h3 { margin-top: 0; padding-bottom: 8px; border-bottom: 2px solid #eee; color: var(--maroon); font-size: 1.1em; }
-    
-    .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-    .input-group label { font-size: 0.85em; font-weight: bold; color: var(--navy); }
-    .input-group input, .input-group select, .input-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; font-family: inherit; }
-    
-    .input-group input::placeholder, .input-group textarea::placeholder { color: #a0aec0; opacity: 0.7; font-style: italic; transition: opacity 0.3s ease; }
-    .input-group input:focus::placeholder, .input-group textarea:focus::placeholder { opacity: 0.2; }
-    
-    .section-tab-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; overflow-x: auto; }
-    .section-title-bar { background: var(--navy); color: white; padding: 10px 15px; font-weight: bold; font-size: 1em; border-radius: 4px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-    .schedule-field-header { background: #4a5568; color: white; padding: 6px 12px; font-weight: bold; font-size: 0.9em; margin: 15px 0 8px 0; border-radius: 4px; display: inline-block; }
-    
-    /* Search Bar Input Styling */
-    .section-search-input { width: 240px; padding: 5px 10px; border-radius: 4px; border: 1px solid #cbd5e0; font-size: 0.85em; color: #2d3748; outline: none; font-weight: normal; }
-    .section-search-input:focus { border-color: #3182ce; box-shadow: 0 0 0 1px #3182ce; }
-
-    /* Fixed Table Layout to Prevent Out-of-Bounds Overflow */
-    .hub-table { width: 100%; border-collapse: collapse; font-size: 0.85em; table-layout: fixed; }
-    .hub-table th { background: #f7fafc; color: #4a5568; padding: 10px 8px; border-bottom: 2px solid #e2e8f0; text-align: left; }
-    .hub-table td { padding: 10px 8px; border-bottom: 1px solid #edf2f7; vertical-align: middle; word-wrap: break-word; }
-    
-    .alert-dot {
-        height: 10px; width: 10px; background-color: #e53e3e; border-radius: 50%;
-        display: inline-block; margin-right: 6px; box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7);
-        animation: pulse-dot 1.6s infinite; flex-shrink: 0;
+    :root {
+        --ppm-primary: #2b6cb0;
+        --ppm-primary-hover: #1a436d;
+        --ppm-secondary: #2f855a;
+        --ppm-secondary-hover: #22543d;
+        --ppm-navy: var(--navy, #1a202c);
+        --ppm-maroon: var(--maroon, #742a2a);
+        --ppm-danger: #e53e3e;
+        --ppm-danger-bg: #fff5f5;
+        --ppm-border: #cbd5e0;
+        --ppm-bg-card: #ffffff;
+        --ppm-bg-subtle: #f7fafc;
     }
+
+    .ppm-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Alert Banner */
+    .alert-banner {
+        background: var(--ppm-danger-bg);
+        border: 2px solid var(--ppm-danger);
+        border-left-width: 8px;
+        padding: 12px 16px;
+        border-radius: 6px;
+    }
+
+    .alert-pill {
+        background: var(--ppm-danger);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Entry Cards Grid */
+    .entry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .card-panel {
+        background: var(--ppm-bg-card);
+        padding: 18px;
+        border-radius: 8px;
+        border: 1px solid var(--ppm-border);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-panel h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #edf2f7;
+        color: var(--ppm-maroon);
+        font-size: 1.05em;
+    }
+
+    .card-panel form {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    /* Input Groups */
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 12px;
+    }
+
+    .input-group label {
+        font-size: 0.85em;
+        font-weight: bold;
+        color: var(--ppm-navy);
+    }
+
+    .input-group input, 
+    .input-group select, 
+    .input-group textarea {
+        padding: 9px 12px;
+        border: 1px solid var(--ppm-border);
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-family: inherit;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: #fff;
+    }
+
+    .input-group input:focus, 
+    .input-group select:focus, 
+    .input-group textarea:focus {
+        outline: none;
+        border-color: var(--ppm-primary);
+        box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.2);
+    }
+
+    .input-group input::placeholder, 
+    .input-group textarea::placeholder {
+        color: #a0aec0;
+        opacity: 0.7;
+        font-style: italic;
+    }
+
+    .btn-submit-card {
+        margin-top: auto;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        font-size: 0.9em;
+    }
+
+    /* Section Cards & Tables */
+    .section-tab-card {
+        background: var(--ppm-bg-card);
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid var(--ppm-border);
+        margin-bottom: 10px;
+    }
+
+    .section-title-bar {
+        background: var(--ppm-navy);
+        color: white;
+        padding: 10px 14px;
+        font-weight: bold;
+        font-size: 0.95em;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .schedule-field-header {
+        background: #4a5568;
+        color: white;
+        padding: 6px 12px;
+        font-weight: bold;
+        font-size: 0.85em;
+        margin: 12px 0 8px 0;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    /* Search Bar Styling */
+    .section-search-input {
+        width: 220px;
+        max-width: 100%;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid #cbd5e0;
+        font-size: 0.85em;
+        color: #2d3748;
+        outline: none;
+        font-weight: normal;
+    }
+
+    /* Responsive Table Container */
+    .table-responsive-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .hub-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85em;
+        min-width: 650px;
+    }
+
+    .hub-table th {
+        background: var(--ppm-bg-subtle);
+        color: #4a5568;
+        padding: 10px 12px;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .hub-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #edf2f7;
+        vertical-align: middle;
+        word-break: break-word;
+    }
+
+    /* Pulse Dot Alert */
+    .alert-dot {
+        height: 10px;
+        width: 10px;
+        background-color: var(--ppm-danger);
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+        flex-shrink: 0;
+        animation: pulse-dot 1.6s infinite;
+    }
+
     @keyframes pulse-dot {
         0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7); }
         70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(229, 62, 62, 0); }
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
     }
 
-    .btn-action-sign { background: #2b6cb0; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; cursor: pointer; display: inline-flex; margin-top: 4px; }
-    .btn-action-sign:hover { background: #1a436d; }
-    .btn-admin-sign { background: #2f855a; }
-    .btn-admin-sign:hover { background: #22543d; }
-
-    /* Flex Alignment Container for Actions */
-    .actions-flex-cell { display: flex; align-items: center; justify-content: flex-start; gap: 6px; flex-wrap: nowrap; }
-
     /* Action Buttons */
-    .btn-edit-entry { background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; line-height: 1; }
+    .btn-action-sign {
+        background: var(--ppm-primary);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: bold;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .btn-action-sign:hover { background: var(--ppm-primary-hover); }
+    .btn-admin-sign { background: var(--ppm-secondary); }
+    .btn-admin-sign:hover { background: var(--ppm-secondary-hover); }
+
+    .actions-flex-cell {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .btn-edit-entry {
+        background: #edf2f7;
+        color: #2d3748;
+        border: 1px solid #cbd5e0;
+        padding: 5px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
     .btn-edit-entry:hover { background: #e2e8f0; }
-    .btn-delete-entry { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; line-height: 1; }
+
+    .btn-delete-entry {
+        background: var(--ppm-danger-bg);
+        color: #c53030;
+        border: 1px solid #feb2b2;
+        padding: 5px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
     .btn-delete-entry:hover { background: #fed7d7; }
 
-    /* Archive Component Styling */
-    .archive-header { background: #4a5568; color: white; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    /* Archive Vault */
+    .archive-header {
+        background: #4a5568;
+        color: white;
+        padding: 12px 16px;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+    }
     .archive-header:hover { background: #2d3748; }
-    .archive-content { display: none; padding: 15px; border: 1px solid #cbd5e0; border-radius: 6px; background: #f7fafc; margin-bottom: 15px; }
+
+    .archive-content {
+        display: none;
+        padding: 15px;
+        border: 1px solid var(--ppm-border);
+        border-radius: 6px;
+        background: var(--ppm-bg-subtle);
+        margin-bottom: 15px;
+    }
+
+    /* Modal Styling */
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+        box-sizing: border-box;
+    }
+
+    .modal-box {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 600px) {
+        .section-title-bar { flex-direction: column; align-items: stretch; }
+        .section-search-input { width: 100%; }
+    }
 </style>
 
 <div class="ppm-wrapper">
@@ -67,7 +344,7 @@
             <b style="color:#c53030;">🚨 PREVENTIVE MAINTENANCE OVERDUE / DUE TODAY:</b>
             <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
                 {% for item in alerts %}
-                    <span style="background:#e53e3e; color:white; padding:4px 8px; border-radius:4px; font-size:0.8em; font-weight:bold;">
+                    <span class="alert-pill">
                         🛠️ {{ item.machine_name }} ({{ item.asset_section }})
                     </span>
                 {% endfor %}
@@ -113,7 +390,7 @@
                     <label>Next Schedule Milestone</label>
                     <input type="date" name="next_schedule_date" value="{{ today_str }}" required>
                 </div>
-                <button type="submit" style="background:var(--maroon); color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; width:100%; cursor:pointer;">Save Asset Fields</button>
+                <button type="submit" class="btn-submit-card" style="background:var(--ppm-maroon);">Save Asset Fields</button>
             </form>
         </div>
 
@@ -143,7 +420,7 @@
                     <label>Set Next Upcoming PPM Date</label>
                     <input type="date" name="update_next_date" value="{{ today_str }}" required>
                 </div>
-                <button type="submit" style="background:var(--navy); color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; width:100%; cursor:pointer;">Commit Machinery Log</button>
+                <button type="submit" class="btn-submit-card" style="background:var(--ppm-navy);">Commit Machinery Log</button>
             </form>
         </div>
 
@@ -164,7 +441,7 @@
                     <label>Inspection Actions Done</label>
                     <textarea name="notes" rows="6" placeholder="Log deep checks done..." required></textarea>
                 </div>
-                <button type="submit" style="background:#2b6cb0; color:white; border:none; padding:10px; border-radius:4px; font-weight:bold; width:100%; cursor:pointer;">Commit Room Log</button>
+                <button type="submit" class="btn-submit-card" style="background:var(--ppm-primary);">Commit Room Log</button>
             </form>
         </div>
     </div>
@@ -174,42 +451,38 @@
         <div class="section-title-bar" style="background:#2d3748;">🗓️ Master Preventive Maintenance Schedules (Organized By Field)</div>
         {% for field_name, items in schedules_by_field.items() %}
             <div class="schedule-field-header">⚡ {{ field_name }} Department Section</div>
-            <table class="hub-table" style="margin-bottom: 15px;">
-                <colgroup>
-                    <col style="width: 35%;">
-                    <col style="width: 20%;">
-                    <col style="width: 25%;">
-                    <col style="width: 20%;">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Machine / Equipment Name</th>
-                        <th>Frequency</th>
-                        <th>Next Scheduled Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for s in items %}
+            <div class="table-responsive-container">
+                <table class="hub-table" style="margin-bottom: 15px;">
+                    <thead>
                         <tr>
-                            <td><strong>{{ s.machine_name }}</strong></td>
-                            <td>{{ s.maintenance_frequency }}</td>
-                            <td style="color:{% if s.next_schedule_date <= today_str %}#e53e3e; font-weight:bold;{% else %}#2d3748{% endif %};">{{ s.next_schedule_date }}</td>
-                            <td>
-                                {% if s.next_schedule_date <= today_str %}
-                                    <span style="color:#e53e3e; font-weight:bold; font-size:0.85em;">⚠️ Maintenance Due</span>
-                                {% else %}
-                                    <span style="color:#2f855a; font-size:0.85em;">✔ Scheduled</span>
-                                {% endif %}
-                            </td>
+                            <th style="width: 35%;">Machine / Equipment Name</th>
+                            <th style="width: 20%;">Frequency</th>
+                            <th style="width: 25%;">Next Scheduled Date</th>
+                            <th style="width: 20%;">Status</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for s in items %}
+                            <tr>
+                                <td><strong>{{ s.machine_name }}</strong></td>
+                                <td>{{ s.maintenance_frequency }}</td>
+                                <td style="color:{% if s.next_schedule_date <= today_str %}#e53e3e; font-weight:bold;{% else %}#2d3748{% endif %};">{{ s.next_schedule_date }}</td>
+                                <td>
+                                    {% if s.next_schedule_date <= today_str %}
+                                        <span style="color:#e53e3e; font-weight:bold; font-size:0.85em;">⚠️ Maintenance Due</span>
+                                    {% else %}
+                                        <span style="color:#2f855a; font-size:0.85em;">✔ Scheduled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endfor %}
     </div>
 
-    <h2 style="color:var(--navy); margin: 10px 0 0 0; border-bottom: 2px solid var(--maroon); padding-bottom:5px;">📋 Active Workspace Ledger (Current Calendar Month)</h2>
+    <h2 style="color:var(--ppm-navy); margin: 10px 0 0 0; border-bottom: 2px solid var(--ppm-maroon); padding-bottom:5px;">📋 Active Workspace Ledger (Current Calendar Month)</h2>
     
     <!-- Section Machinery Ledgers -->
     {% for section_name, records in ledgers.items() %}
@@ -221,102 +494,95 @@
                        data-target-table="table-{{ section_name|lower|replace(' ', '-') }}" 
                        placeholder="🔍 Search {{ section_name }} assets..." />
             </div>
-            <table class="hub-table" id="table-{{ section_name|lower|replace(' ', '-') }}">
-                <colgroup>
-                    <col style="width: 11%;">
-                    <col style="width: 16%;">
-                    <col style="width: 13%;">
-                    <col style="width: 26%;">
-                    <col style="width: 12%;">
-                    <col style="width: 12%;">
-                    <col style="width: 10%;">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Machine Asset</th>
-                        <th>Technician</th>
-                        <th>Work Summary</th>
-                        <th>Supervisor Signature</th>
-                        <th>Chief Engineer Approval</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in records %}
-                        <tr id="row-section-{{ r.id }}" class="ppm-row-item {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}is-unfinished{% endif %}">
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <span class="indicator-container">
-                                        {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}
-                                            <span class="alert-dot" title="Unfinished Work"></span>
+            <div class="table-responsive-container">
+                <table class="hub-table" id="table-{{ section_name|lower|replace(' ', '-') }}">
+                    <thead>
+                        <tr>
+                            <th style="width: 11%;">Date</th>
+                            <th style="width: 16%;">Machine Asset</th>
+                            <th style="width: 13%;">Technician</th>
+                            <th style="width: 26%;">Work Summary</th>
+                            <th style="width: 12%;">Supervisor Signature</th>
+                            <th style="width: 12%;">Chief Engineer Approval</th>
+                            <th style="width: 10%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                            <tr id="row-section-{{ r.id }}" class="ppm-row-item {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}is-unfinished{% endif %}">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <span class="indicator-container">
+                                            {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}
+                                                <span class="alert-dot" title="Unfinished Work"></span>
+                                            {% endif %}
+                                        </span>
+                                        <span>{{ r.ppm_date }}</span>
+                                    </div>
+                                </td>
+                                <td><strong class="target-name-val">{{ r.equipment_name }}</strong></td>
+                                <td style="color: var(--ppm-navy); font-weight: bold;" class="tech-name-val">{{ r.technician_name }}</td>
+                                <td><p class="work-details-val" style="margin:0; font-size:0.95em; color:#4a5568;">{{ r.work_details }}</p></td>
+                                
+                                <!-- Supervisor Verification -->
+                                <td>
+                                    <div id="sig-box-supervisor-section-{{ r.id }}" class="supervisor-sig-status" data-signed="{% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}true{% else %}false{% endif %}">
+                                        {% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}
+                                            <span style="color: #2b6cb0; font-weight: bold;">👤 {{ r.supervisor_name }}</span>
+                                            <br><small style="color:#718096;">🕒 {{ r.supervisor_signed_at }}</small>
+                                        {% else %}
+                                            <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Verification</span>
+                                            {% if user_role in ['SUPERVISOR', 'ADMIN'] %}
+                                                <form action="{{ url_for('verify_ppm_action', action_role='supervisor', table_type='section', record_id=r.id) }}" method="POST" class="ajax-sign-form">
+                                                    <button type="submit" class="btn-action-sign">🖋️ Sign</button>
+                                                </form>
+                                            {% endif %}
                                         {% endif %}
-                                    </span>
-                                    <span>{{ r.ppm_date }}</span>
-                                </div>
-                            </td>
-                            <td><strong class="target-name-val">{{ r.equipment_name }}</strong></td>
-                            <td style="color: var(--navy); font-weight: bold;" class="tech-name-val">{{ r.technician_name }}</td>
-                            <td><p class="work-details-val" style="margin:0; font-size:0.95em; color:#4a5568;">{{ r.work_details }}</p></td>
-                            
-                            <!-- Supervisor Verification -->
-                            <td>
-                                <div id="sig-box-supervisor-section-{{ r.id }}" class="supervisor-sig-status" data-signed="{% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}true{% else %}false{% endif %}">
-                                    {% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}
-                                        <span style="color: #2b6cb0; font-weight: bold;">👤 {{ r.supervisor_name }}</span>
-                                        <br><small style="color:#718096;">🕒 {{ r.supervisor_signed_at }}</small>
-                                    {% else %}
-                                        <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Verification</span>
-                                        {% if user_role in ['SUPERVISOR', 'ADMIN'] %}
-                                            <form action="{{ url_for('verify_ppm_action', action_role='supervisor', table_type='section', record_id=r.id) }}" method="POST" class="ajax-sign-form">
-                                                <button type="submit" class="btn-action-sign">🖋️ Sign</button>
-                                            </form>
+                                    </div>
+                                </td>
+                                
+                                <!-- Chief Engineer Verification -->
+                                <td>
+                                    <div id="sig-box-admin-section-{{ r.id }}" class="admin-sig-status" data-signed="{% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}true{% else %}false{% endif %}">
+                                        {% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}
+                                            <span style="color: #2f855a; font-weight: bold;">🛡️ {{ r.chief_engineer_name }}</span>
+                                            <br><small style="color:#718096;">🕒 {{ r.chief_signed_at }}</small>
+                                        {% else %}
+                                            <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Chief Sign-off</span>
+                                            {% if user_role in ['ADMIN', 'CHIEF_ENGINEER'] %}
+                                                <form action="{{ url_for('verify_ppm_action', action_role='admin', table_type='section', record_id=r.id) }}" method="POST" class="ajax-sign-form">
+                                                    <button type="submit" class="btn-action-sign btn-admin-sign">🔒 Final Sign</button>
+                                                </form>
+                                            {% endif %}
                                         {% endif %}
-                                    {% endif %}
-                                </div>
-                            </td>
-                            
-                            <!-- Chief Engineer Verification -->
-                            <td>
-                                <div id="sig-box-admin-section-{{ r.id }}" class="admin-sig-status" data-signed="{% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}true{% else %}false{% endif %}">
-                                    {% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}
-                                        <span style="color: #2f855a; font-weight: bold;">🛡️ {{ r.chief_engineer_name }}</span>
-                                        <br><small style="color:#718096;">🕒 {{ r.chief_signed_at }}</small>
-                                    {% else %}
-                                        <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Chief Sign-off</span>
-                                        {% if user_role in ['ADMIN', 'CHIEF_ENGINEER'] %}
-                                            <form action="{{ url_for('verify_ppm_action', action_role='admin', table_type='section', record_id=r.id) }}" method="POST" class="ajax-sign-form">
-                                                <button type="submit" class="btn-action-sign btn-admin-sign">🔒 Final Sign</button>
-                                            </form>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </td>
+                                    </div>
+                                </td>
 
-                            <!-- Perfectly Aligned Actions Column -->
-                            <td>
-                                <div class="actions-flex-cell">
-                                    <button type="button" class="btn-edit-entry" 
-                                            onclick="openEditModal('section', '{{ r.id }}')">
-                                        ✏️ Edit
-                                    </button>
-                                    <button type="button" class="btn-delete-entry" 
-                                            onclick="deleteEntryNoJump('section', '{{ r.id }}')">
-                                        🗑️ Delete
-                                    </button>
-                                </div>
+                                <!-- Actions Column -->
+                                <td>
+                                    <div class="actions-flex-cell">
+                                        <button type="button" class="btn-edit-entry" 
+                                                onclick="openEditModal('section', '{{ r.id }}')">
+                                            ✏️ Edit
+                                        </button>
+                                        <button type="button" class="btn-delete-entry" 
+                                                onclick="deleteEntryNoJump('section', '{{ r.id }}')">
+                                            🗑️ Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No active operations logged this month.</td></tr>
+                        {% endfor %}
+                        <tr class="no-match-row" style="display: none;">
+                            <td colspan="7" style="text-align: center; color: #a0aec0; font-style: italic; padding: 15px;">
+                                No matching entries found for this section.
                             </td>
                         </tr>
-                    {% else %}
-                        <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No active operations logged this month.</td></tr>
-                    {% endfor %}
-                    <tr class="no-match-row" style="display: none;">
-                        <td colspan="7" style="text-align: center; color: #a0aec0; font-style: italic; padding: 15px;">
-                            No matching entries found for this section.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     {% endfor %}
 
@@ -329,96 +595,89 @@
                    data-target-table="table-room-registry" 
                    placeholder="🔍 Search room logs..." />
         </div>
-        <table class="hub-table" id="table-room-registry">
-            <colgroup>
-                <col style="width: 11%;">
-                <col style="width: 16%;">
-                <col style="width: 13%;">
-                <col style="width: 26%;">
-                <col style="width: 12%;">
-                <col style="width: 12%;">
-                <col style="width: 10%;">
-            </colgroup>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Target Room</th>
-                    <th>Technician</th>
-                    <th>Inspection Metrics Notes</th>
-                    <th>Supervisor Signature</th>
-                    <th>Chief Engineer Approval</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in rooms %}
-                    <tr id="row-room-{{ r.id }}" class="ppm-row-item {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}is-unfinished{% endif %}">
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <span class="indicator-container">
-                                    {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}
-                                        <span class="alert-dot" title="Unfinished Work"></span>
+        <div class="table-responsive-container">
+            <table class="hub-table" id="table-room-registry">
+                <thead>
+                    <tr>
+                        <th style="width: 11%;">Date</th>
+                        <th style="width: 16%;">Target Room</th>
+                        <th style="width: 13%;">Technician</th>
+                        <th style="width: 26%;">Inspection Metrics Notes</th>
+                        <th style="width: 12%;">Supervisor Signature</th>
+                        <th style="width: 12%;">Chief Engineer Approval</th>
+                        <th style="width: 10%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rooms %}
+                        <tr id="row-room-{{ r.id }}" class="ppm-row-item {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}is-unfinished{% endif %}">
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <span class="indicator-container">
+                                        {% if not r.supervisor_name or r.supervisor_name == 'Pending Signature' or r.supervisor_name == '' or not r.chief_engineer_name or r.chief_engineer_name == 'Pending Signature' or r.chief_engineer_name == '' %}
+                                            <span class="alert-dot" title="Unfinished Work"></span>
+                                        {% endif %}
+                                    </span>
+                                    <span>{{ r.ppm_date }}</span>
+                                </div>
+                            </td>
+                            <td><strong class="target-name-val">{{ r.room_number }}</strong></td>
+                            <td style="color: var(--ppm-navy); font-weight: bold;" class="tech-name-val">{{ r.technician_name }}</td>
+                            <td><p class="work-details-val" style="margin:0; font-size:0.95em; color:#4a5568;">{{ r.notes }}</p></td>
+                            <td>
+                                <div id="sig-box-supervisor-room-{{ r.id }}" class="supervisor-sig-status" data-signed="{% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}true{% else %}false{% endif %}">
+                                    {% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}
+                                        <span style="color: #2b6cb0; font-weight: bold;">👤 {{ r.supervisor_name }}</span>
+                                        <br><small style="color:#718096;">🕒 {{ r.supervisor_signed_at }}</small>
+                                    {% else %}
+                                        <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Verification</span>
+                                        {% if user_role in ['SUPERVISOR', 'ADMIN'] %}
+                                            <form action="{{ url_for('verify_ppm_action', action_role='supervisor', table_type='room', record_id=r.id) }}" method="POST" class="ajax-sign-form">
+                                                <button type="submit" class="btn-action-sign">🖋️ Sign</button>
+                                            </form>
+                                        {% endif %}
                                     {% endif %}
-                                </span>
-                                <span>{{ r.ppm_date }}</span>
-                            </div>
-                        </td>
-                        <td><strong class="target-name-val">{{ r.room_number }}</strong></td>
-                        <td style="color: var(--navy); font-weight: bold;" class="tech-name-val">{{ r.technician_name }}</td>
-                        <td><p class="work-details-val" style="margin:0; font-size:0.95em; color:#4a5568;">{{ r.notes }}</p></td>
-                        <td>
-                            <div id="sig-box-supervisor-room-{{ r.id }}" class="supervisor-sig-status" data-signed="{% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}true{% else %}false{% endif %}">
-                                {% if r.supervisor_name and r.supervisor_name != 'Pending Signature' and r.supervisor_name != '' %}
-                                    <span style="color: #2b6cb0; font-weight: bold;">👤 {{ r.supervisor_name }}</span>
-                                    <br><small style="color:#718096;">🕒 {{ r.supervisor_signed_at }}</small>
-                                {% else %}
-                                    <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Verification</span>
-                                    {% if user_role in ['SUPERVISOR', 'ADMIN'] %}
-                                        <form action="{{ url_for('verify_ppm_action', action_role='supervisor', table_type='room', record_id=r.id) }}" method="POST" class="ajax-sign-form">
-                                            <button type="submit" class="btn-action-sign">🖋️ Sign</button>
-                                        </form>
+                                </div>
+                            </td>
+                            <td>
+                                <div id="sig-box-admin-room-{{ r.id }}" class="admin-sig-status" data-signed="{% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}true{% else %}false{% endif %}">
+                                    {% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}
+                                        <span style="color: #2f855a; font-weight: bold;">🛡️ {{ r.chief_engineer_name }}</span>
+                                        <br><small style="color:#718096;">🕒 {{ r.chief_signed_at }}</small>
+                                    {% else %}
+                                        <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Chief Sign-off</span>
+                                        {% if user_role in ['ADMIN', 'CHIEF_ENGINEER'] %}
+                                            <form action="{{ url_for('verify_ppm_action', action_role='admin', table_type='room', record_id=r.id) }}" method="POST" class="ajax-sign-form">
+                                                <button type="submit" class="btn-action-sign btn-admin-sign">🔒 Final Sign</button>
+                                            </form>
+                                        {% endif %}
                                     {% endif %}
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            <div id="sig-box-admin-room-{{ r.id }}" class="admin-sig-status" data-signed="{% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}true{% else %}false{% endif %}">
-                                {% if r.chief_engineer_name and r.chief_engineer_name != 'Pending Signature' and r.chief_engineer_name != '' %}
-                                    <span style="color: #2f855a; font-weight: bold;">🛡️ {{ r.chief_engineer_name }}</span>
-                                    <br><small style="color:#718096;">🕒 {{ r.chief_signed_at }}</small>
-                                {% else %}
-                                    <span style="color: #a0aec0; font-style: italic; font-size:0.9em;">Awaiting Chief Sign-off</span>
-                                    {% if user_role in ['ADMIN', 'CHIEF_ENGINEER'] %}
-                                        <form action="{{ url_for('verify_ppm_action', action_role='admin', table_type='room', record_id=r.id) }}" method="POST" class="ajax-sign-form">
-                                            <button type="submit" class="btn-action-sign btn-admin-sign">🔒 Final Sign</button>
-                                        </form>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="actions-flex-cell">
-                                <button type="button" class="btn-edit-entry" 
-                                        onclick="openEditModal('room', '{{ r.id }}')">
-                                    ✏️ Edit
-                                </button>
-                                <button type="button" class="btn-delete-entry" 
-                                        onclick="deleteEntryNoJump('room', '{{ r.id }}')">
-                                    🗑️ Delete
-                                </button>
-                            </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="actions-flex-cell">
+                                    <button type="button" class="btn-edit-entry" 
+                                            onclick="openEditModal('room', '{{ r.id }}')">
+                                        ✏️ Edit
+                                    </button>
+                                    <button type="button" class="btn-delete-entry" 
+                                            onclick="deleteEntryNoJump('room', '{{ r.id }}')">
+                                        🗑️ Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No active room logs entry for this cycle.</td></tr>
+                    {% endfor %}
+                    <tr class="no-match-row" style="display: none;">
+                        <td colspan="7" style="text-align: center; color: #a0aec0; font-style: italic; padding: 15px;">
+                            No matching room logs found.
                         </td>
                     </tr>
-                {% else %}
-                    <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No active room logs entry for this cycle.</td></tr>
-                {% endfor %}
-                <tr class="no-match-row" style="display: none;">
-                    <td colspan="7" style="text-align: center; color: #a0aec0; font-style: italic; padding: 15px;">
-                        No matching room logs found.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Monthly Vault Archives -->
@@ -432,48 +691,52 @@
             </div>
             
             <div id="vault-{{ month_tag }}" class="archive-content">
-                <h4 style="color:var(--navy); margin-top:0;">⚙️ Machinery Historical Track Logs</h4>
-                <table class="hub-table" style="margin-bottom:20px;">
-                    <thead>
-                        <tr><th>Date</th><th>Asset</th><th>Section</th><th>Technician</th><th>Details</th><th>Supervisor</th><th>Chief Engineer</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for r in data.machinery %}
-                            <tr>
-                                <td>{{ r.ppm_date }}</td>
-                                <td>{{ r.equipment_name }}</td>
-                                <td><span class="badge" style="background:#edf2f7; color:#4a5568;">{{ r.asset_section }}</span></td>
-                                <td>{{ r.technician_name }}</td>
-                                <td>{{ r.work_details }}</td>
-                                <td><span style="color:#2b6cb0;">👤 {{ r.supervisor_name if r.supervisor_name else 'Unsigned' }}</span></td>
-                                <td><span style="color:#2f855a;">🛡️ {{ r.chief_engineer_name if r.chief_engineer_name else 'Unsigned' }}</span></td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="7" style="color:#a0aec0; font-style:italic;">No machinery metrics logged during this cycle loop.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h4 style="color:var(--ppm-navy); margin-top:0;">⚙️ Machinery Historical Track Logs</h4>
+                <div class="table-responsive-container">
+                    <table class="hub-table" style="margin-bottom:20px;">
+                        <thead>
+                            <tr><th>Date</th><th>Asset</th><th>Section</th><th>Technician</th><th>Details</th><th>Supervisor</th><th>Chief Engineer</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for r in data.machinery %}
+                                <tr>
+                                    <td>{{ r.ppm_date }}</td>
+                                    <td>{{ r.equipment_name }}</td>
+                                    <td><span style="background:#edf2f7; color:#4a5568; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">{{ r.asset_section }}</span></td>
+                                    <td>{{ r.technician_name }}</td>
+                                    <td>{{ r.work_details }}</td>
+                                    <td><span style="color:#2b6cb0;">👤 {{ r.supervisor_name if r.supervisor_name else 'Unsigned' }}</span></td>
+                                    <td><span style="color:#2f855a;">🛡️ {{ r.chief_engineer_name if r.chief_engineer_name else 'Unsigned' }}</span></td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="7" style="color:#a0aec0; font-style:italic;">No machinery metrics logged during this cycle loop.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
                 <h4 style="color:#2b6cb0;">🏨 Guest Rooms Historical Track Logs</h4>
-                <table class="hub-table">
-                    <thead>
-                        <tr><th>Date</th><th>Room</th><th>Technician</th><th>Notes Summary</th><th>Supervisor</th><th>Chief Engineer</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for r in data.rooms %}
-                            <tr>
-                                <td>{{ r.ppm_date }}</td>
-                                <td><strong>{{ r.room_number }}</strong></td>
-                                <td>{{ r.technician_name }}</td>
-                                <td>{{ r.notes }}</td>
-                                <td><span style="color:#2b6cb0;">👤 {{ r.supervisor_name if r.supervisor_name else 'Unsigned' }}</span></td>
-                                <td><span style="color:#2f855a;">🛡️ {{ r.chief_engineer_name if r.chief_engineer_name else 'Unsigned' }}</span></td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="6" style="color:#a0aec0; font-style:italic;">No guest room checklists committed during this archive window.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive-container">
+                    <table class="hub-table">
+                        <thead>
+                            <tr><th>Date</th><th>Room</th><th>Technician</th><th>Notes Summary</th><th>Supervisor</th><th>Chief Engineer</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for r in data.rooms %}
+                                <tr>
+                                    <td>{{ r.ppm_date }}</td>
+                                    <td><strong>{{ r.room_number }}</strong></td>
+                                    <td>{{ r.technician_name }}</td>
+                                    <td>{{ r.notes }}</td>
+                                    <td><span style="color:#2b6cb0;">👤 {{ r.supervisor_name if r.supervisor_name else 'Unsigned' }}</span></td>
+                                    <td><span style="color:#2f855a;">🛡️ {{ r.chief_engineer_name if r.chief_engineer_name else 'Unsigned' }}</span></td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="6" style="color:#a0aec0; font-style:italic;">No guest room checklists committed during this archive window.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     {% else %}
@@ -483,9 +746,9 @@
 </div>
 
 <!-- Edit Report Modal Container -->
-<div id="editReportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 25px; border-radius: 8px; width: 450px; max-width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-        <h3 style="margin-top: 0; color: var(--navy); border-bottom: 2px solid #edf2f7; padding-bottom: 10px;">✏️ Edit Maintenance Report</h3>
+<div id="editReportModal" class="modal-backdrop">
+    <div class="modal-box">
+        <h3 style="margin-top: 0; color: var(--ppm-navy); border-bottom: 2px solid #edf2f7; padding-bottom: 10px;">✏️ Edit Maintenance Report</h3>
         <form id="editReportForm" onsubmit="submitEditNoJump(event)">
             <input type="hidden" id="edit_table_type">
             <input type="hidden" id="edit_record_id">
@@ -502,197 +765,74 @@
                 <textarea id="edit_work_details" name="work_details" rows="4" required></textarea>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button type="button" onclick="closeEditModal()" style="background: #cbd5e0; color: #2d3748; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancel</button>
-                <button type="submit" style="background: var(--navy); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Save Changes</button>
+                <button type="button" onclick="closeEditModal()" style="background: #e2e8f0; color: #2d3748; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer;">Cancel</button>
+                <button type="submit" style="background: var(--ppm-primary); color: white; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer;">Save Changes</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-function toggleArchiveVault(id) {
-    const vault = document.getElementById(id);
-    const arrow = document.getElementById('arrow-' + id);
-    if (vault.style.display === "block") {
-        vault.style.display = "none";
-        arrow.innerText = "▼ View System Archive";
-    } else {
-        vault.style.display = "block";
-        arrow.innerText = "▲ Collapse System Archive";
+    function toggleArchiveVault(id) {
+        const el = document.getElementById(id);
+        const arrow = document.getElementById('arrow-' + id);
+        if (el.style.display === "block") {
+            el.style.display = "none";
+            arrow.innerHTML = "▼ View System Archive";
+        } else {
+            el.style.display = "block";
+            arrow.innerHTML = "▲ Hide System Archive";
+        }
     }
-}
 
-// Open Edit Modal using existing row elements in DOM
-function openEditModal(tableType, id) {
-    const row = document.getElementById(`row-${tableType}-${id}`);
-    if (!row) return;
+    function openEditModal(tableType, recordId) {
+        const row = document.getElementById(`row-${tableType}-${recordId}`);
+        if (!row) return;
 
-    const technician = row.querySelector('.tech-name-val').innerText.trim();
-    const target = row.querySelector('.target-name-val').innerText.trim();
-    const details = row.querySelector('.work-details-val').innerText.trim();
+        const techName = row.querySelector('.tech-name-val')?.innerText.trim() || '';
+        const targetName = row.querySelector('.target-name-val')?.innerText.trim() || '';
+        const workDetails = row.querySelector('.work-details-val')?.innerText.trim() || '';
 
-    document.getElementById('edit_table_type').value = tableType;
-    document.getElementById('edit_record_id').value = id;
-    document.getElementById('edit_technician_name').value = technician;
-    document.getElementById('edit_target_name').value = target;
-    document.getElementById('edit_work_details').value = details;
-    
-    document.getElementById('editReportModal').style.display = 'flex';
-}
+        document.getElementById('edit_table_type').value = tableType;
+        document.getElementById('edit_record_id').value = recordId;
+        document.getElementById('edit_technician_name').value = techName;
+        document.getElementById('edit_target_name').value = targetName;
+        document.getElementById('edit_work_details').value = workDetails;
 
-function closeEditModal() {
-    document.getElementById('editReportModal').style.display = 'none';
-}
+        document.getElementById('editReportModal').style.display = 'flex';
+    }
 
-// 1. Delete Entry without refreshing page / jumping to top
-function deleteEntryNoJump(tableType, recordId) {
-    if (!confirm('Are you sure you want to delete this report?')) return;
+    function closeEditModal() {
+        document.getElementById('editReportModal').style.display = 'none';
+    }
 
-    fetch(`/delete_ppm_entry/${tableType}/${recordId}`, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(response => {
-        if (response.ok) {
-            const row = document.getElementById(`row-${tableType}-${recordId}`);
-            if (row) {
-                row.style.transition = 'opacity 0.3s ease';
-                row.style.opacity = '0';
-                setTimeout(() => row.remove(), 300);
-            }
-        } else {
-            alert('Failed to delete entry.');
-        }
-    })
-    .catch(err => console.error('Delete error:', err));
-}
-
-// 2. Submit Edit form via AJAX without page reload
-function submitEditNoJump(event) {
-    event.preventDefault();
-
-    const tableType = document.getElementById('edit_table_type').value;
-    const recordId = document.getElementById('edit_record_id').value;
-    const techName = document.getElementById('edit_technician_name').value;
-    const targetName = document.getElementById('edit_target_name').value;
-    const workDetails = document.getElementById('edit_work_details').value;
-
-    const formData = new FormData();
-    formData.append('technician_name', techName);
-    formData.append('target_name', targetName);
-    formData.append('work_details', workDetails);
-
-    fetch(`/edit_ppm_entry/${tableType}/${recordId}`, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            const row = document.getElementById(`row-${tableType}-${recordId}`);
-            if (row) {
-                row.querySelector('.tech-name-val').innerText = techName;
-                row.querySelector('.target-name-val').innerText = targetName;
-                row.querySelector('.work-details-val').innerText = workDetails;
-            }
-            closeEditModal();
-        } else {
-            alert('Failed to update entry.');
-        }
-    })
-    .catch(err => console.error('Edit error:', err));
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-    // 3. Real-time Search Filters
+    /* Client-side Table Search Filter */
     document.querySelectorAll('.section-search-input').forEach(input => {
-        input.addEventListener('keyup', function() {
-            const filterText = this.value.toLowerCase().trim();
+        input.addEventListener('input', function() {
             const targetTableId = this.getAttribute('data-target-table');
-            const targetTable = document.getElementById(targetTableId);
-            
-            if (!targetTable) return;
+            const table = document.getElementById(targetTableId);
+            if (!table) return;
 
-            const rows = targetTable.querySelectorAll('tbody tr:not(.no-match-row)');
+            const filter = this.value.toLowerCase().trim();
+            const rows = table.querySelectorAll('tbody tr:not(.no-match-row)');
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const rowText = row.innerText.toLowerCase();
-                if (rowText.includes(filterText)) {
-                    row.style.display = "";
+                const text = row.innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
                     visibleCount++;
                 } else {
-                    row.style.display = "none";
+                    row.style.display = 'none';
                 }
             });
 
-            const noMatchRow = targetTable.querySelector('.no-match-row');
+            const noMatchRow = table.querySelector('.no-match-row');
             if (noMatchRow) {
-                noMatchRow.style.display = (visibleCount === 0 && rows.length > 0) ? "" : "none";
+                noMatchRow.style.display = (visibleCount === 0) ? '' : 'none';
             }
         });
     });
-
-    // 4. AJAX Signatures without jumping
-    document.querySelectorAll('.ajax-sign-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formUrl = this.getAttribute('action');
-            const urlParts = formUrl.split('/');
-            
-            const recordId = urlParts.pop();
-            const tableType = urlParts.pop();
-            const actionRole = urlParts.pop();
-            
-            fetch(formUrl, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const targetContainerId = `sig-box-${actionRole}-${tableType}-${recordId}`;
-                    const targetElement = document.getElementById(targetContainerId);
-                    
-                    if (targetElement) {
-                        const icon = actionRole === 'supervisor' ? '👤' : '🛡️';
-                        const color = actionRole === 'supervisor' ? '#2b6cb0' : '#2f855a';
-
-                        targetElement.innerHTML = `
-                            <span style="color: ${color}; font-weight: bold;">
-                                ${icon} ${data.approver}
-                            </span>
-                            <br><small style="color:#718096;">🕒 ${data.timestamp}</small>
-                        `;
-                        targetElement.setAttribute('data-signed', 'true');
-                    }
-
-                    // Dynamically update alert dot indicator
-                    const parentRow = document.getElementById(`row-${tableType}-${recordId}`);
-                    if (parentRow) {
-                        const supervisorBox = parentRow.querySelector('.supervisor-sig-status');
-                        const adminBox = parentRow.querySelector('.admin-sig-status');
-                        
-                        const isSupSigned = supervisorBox ? supervisorBox.getAttribute('data-signed') === 'true' : false;
-                        const isAdminSigned = adminBox ? adminBox.getAttribute('data-signed') === 'true' : false;
-                        
-                        if (isSupSigned && isAdminSigned) {
-                            parentRow.classList.remove('is-unfinished');
-                            const indicator = parentRow.querySelector('.indicator-container');
-                            if (indicator) indicator.innerHTML = ''; 
-                        }
-                    }
-                } else {
-                    alert("Authorization failed.");
-                }
-            })
-            .catch(error => {
-                console.error("Error submitting signature:", error);
-            });
-        });
-    });
-});
 </script>
 
 {% endblock %}

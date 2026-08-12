@@ -3,67 +3,193 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div id="requisition-data" 
-     data-labels='{{ chart_labels|tojson }}' 
-     data-frequencies='{{ chart_frequencies|tojson }}'
-     data-received='{{ chart_received_qtys|tojson }}' 
-     style="display: none;"></div>
+<!-- Safe JSON data store -->
+<script id="chart-data" type="application/json">
+{
+    "labels": {{ chart_labels|tojson|safe }},
+    "frequencies": {{ chart_frequencies|tojson|safe }},
+    "received": {{ chart_received_qtys|tojson|safe }}
+}
+</script>
 
-<div class="requisition-container" style="max-width: 1200px; margin: auto; padding: 20px; font-family: 'Segoe UI', sans-serif;">
+<style>
+    .requisition-container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 15px;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-    <div style="border-bottom: 2px solid var(--maroon); padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+    /* Header & Filter Rows */
+    .req-header {
+        border-bottom: 2px solid var(--maroon, #800000);
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .req-header-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: max-content;
+    }
+
+    .filter-bar {
+        background: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Responsive Grids */
+    .grid-two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .form-grid-fuel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .form-grid-material {
+        display: grid;
+        grid-template-columns: 1.5fr 2fr 1fr 2fr auto;
+        gap: 15px;
+    }
+
+    /* Responsive Table Wrapper */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        min-width: 600px; /* Prevents cell squeezing on mobile */
+    }
+
+    /* Mobile Media Queries */
+    @media (max-width: 850px) {
+        .grid-two-col {
+            grid-template-columns: 1fr;
+        }
+
+        .form-grid-material {
+            grid-template-columns: 1fr;
+        }
+
+        .req-header-controls {
+            max-width: 100%;
+        }
+
+        .req-header-controls input {
+            flex-grow: 1;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-grid-fuel {
+            grid-template-columns: 1fr;
+        }
+
+        .form-grid-fuel button {
+            grid-column: span 1 !important;
+        }
+
+        .requisition-container {
+            padding: 10px;
+        }
+    }
+</style>
+
+<div class="requisition-container">
+
+    <!-- HEADER SECTION -->
+    <div class="req-header">
         <div>
-            <h2 style="color: var(--maroon); margin: 0;">Supply & Fuel Tracking</h2>
-            <p style="margin: 5px 0 0 0; color: #666;">Centralized Material Requisitions and Fuel Logs</p>
+            <h2 style="color: var(--maroon, #800000); margin: 0;">Supply & Fuel Tracking</h2>
+            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;">Centralized Material Requisitions and Fuel Logs</p>
         </div>
         
-        <div style="display: flex; gap: 10px;">
+        <div class="req-header-controls">
             <input type="text" id="itemSearch" onkeyup="filterTable()" placeholder="Search..." style="padding: 8px 15px; border: 2px solid #ddd; border-radius: 20px; outline: none;">
             {% if session.role|upper == 'ADMIN' %}
-            <form action="{{ url_for('clear_requisitions') }}" method="POST" onsubmit="return confirm('WARNING: This will permanently delete ALL requisition history. Continue?');">
-                <button type="submit" style="background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.85em;">🗑 Clear History</button>
+            <form action="{{ url_for('clear_requisitions') }}" method="POST" onsubmit="return confirm('WARNING: This will permanently delete ALL requisition history. Continue?');" style="margin: 0;">
+                <button type="submit" style="background: #ff4d4d; color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; font-size: 0.85em; width: 100%;">🗑 Clear History</button>
             </form>
             {% endif %}
         </div>
     </div>
 
+    <!-- CHART CONTAINER -->
     <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-        <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--navy); font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px;">📈 Item Demand & Velocity Analyzer</h3>
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--navy, #2c3e50); font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px;">📈 Item Demand & Velocity Analyzer</h3>
         <div style="position: relative; width: 100%; height: 280px;">
             <canvas id="itemVelocityChart"></canvas>
         </div>
     </div>
 
-    <div style="background: #f8f9fa; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
-        <strong style="color: var(--maroon); font-size: 0.9em;">GENERATE REPORT:</strong>
-        <form method="GET" action="{{ url_for('material_requisition') }}" style="display: flex; gap: 10px; align-items: center;">
-            <select name="month" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
+    <!-- REPORT FILTER BAR -->
+    <div class="filter-bar">
+        <strong style="color: var(--maroon, #800000); font-size: 0.9em; white-space: nowrap;">GENERATE REPORT:</strong>
+        <form method="GET" action="{{ url_for('material_requisition') }}" class="filter-form">
+            <select name="month" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; flex: 1; min-width: 100px;">
                 <option value="">All Months</option>
                 {% for m_val, m_name in [('01','Jan'), ('02','Feb'), ('03','Mar'), ('04','Apr'), ('05','May'), ('06','Jun'), ('07','Jul'), ('08','Aug'), ('09','Sep'), ('10','Oct'), ('11','Nov'), ('12','Dec')] %}
                     <option value="{{ m_val }}" {% if selected_month == m_val %}selected{% endif %}>{{ m_name }}</option>
                 {% endfor %}
             </select>
             
-            <input type="number" name="year" value="{{ selected_year or '2026' }}" style="width: 80px; padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
-            <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Filter</button>
+            <input type="number" name="year" value="{{ selected_year or '2026' }}" style="width: 80px; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+            <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Filter</button>
             
             {% if selected_month or selected_year %}
-                <a href="{{ url_for('material_requisition') }}" style="color: #e74c3c; font-size: 0.8em; text-decoration: none;">Clear Filter</a>
+                <a href="{{ url_for('material_requisition') }}" style="color: #e74c3c; font-size: 0.85em; text-decoration: none; margin-left: 5px;">Clear Filter</a>
             {% endif %}
         </form>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+    <!-- FUEL UPDATES & RECENT LOGS SECTION -->
+    <div class="grid-two-col">
         <div style="background: #fdf2f2; border: 1px solid #eecaca; border-radius: 8px; padding: 20px;">
-            <h3 style="margin-top: 0; color: var(--maroon); font-size: 0.9em; text-transform: uppercase;">Update Fuel/Gas Delivery</h3>
-            <form action="{{ url_for('fuel_update') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <h3 style="margin-top: 0; color: var(--maroon, #800000); font-size: 0.9em; text-transform: uppercase;">Update Fuel/Gas Delivery</h3>
+            <form action="{{ url_for('fuel_update') }}" method="POST" class="form-grid-fuel">
                 <select name="fuel_type" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     <option value="" disabled selected>Select Type</option>
                     <option value="Diesel">Diesel (Ltrs)</option>
                     <option value="LPG">LPG (Kg)</option>
                 </select>
                 <input type="number" step="0.01" name="qty" placeholder="Quantity" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                <button type="submit" style="grid-column: span 2; background: var(--maroon); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">Record Receipt</button>
+                <button type="submit" style="grid-column: span 2; background: var(--maroon, #800000); color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">Record Receipt</button>
             </form>
         </div>
 
@@ -83,9 +209,11 @@
                         <td style="padding: 8px;"><strong>{{ f.fuel_type }}</strong>: {{ f.quantity }}</td>
                         <td><small>{{ f.received_by.upper() if f.received_by else 'N/A' }}</small><br><span style="font-size: 0.7em; color: #999;">{{ f.date }}</span></td>
                         <td style="text-align: right;">
+                            {% if session.role|upper in ['ADMIN', 'SUPERVISOR'] %}
                             <form action="{{ url_for('delete_fuel', id=f.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this record?');">
                                 <button type="submit" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.1em;">&times;</button>
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -94,19 +222,21 @@
         </div>
     </div>
 
-    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
-        <h3 style="margin-top: 0; color: var(--maroon); font-size: 1.1em;">New Material Request</h3>
-        <form action="{{ url_for('material_requisition') }}" method="POST" style="display: grid; grid-template-columns: 1.5fr 2fr 1fr 2fr auto; gap: 15px;">
+    <!-- NEW MATERIAL REQUEST FORM -->
+    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="margin-top: 0; color: var(--maroon, #800000); font-size: 1.1em;">New Material Request</h3>
+        <form action="{{ url_for('material_requisition') }}" method="POST" class="form-grid-material">
             <input type="text" name="technician_name" placeholder="Technician Name" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
             <input type="text" name="item" placeholder="Item Name" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
             <input type="text" name="qty" placeholder="Qty" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
             <input type="text" name="purpose" placeholder="Location/Purpose" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-            <button type="submit" style="background: var(--maroon); color: white; border: none; padding: 10px 25px; border-radius: 4px; font-weight: bold; cursor: pointer;">Submit Request</button>
+            <button type="submit" style="background: var(--maroon, #800000); color: white; border: none; padding: 10px 25px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Submit Request</button>
         </form>
     </div>
 
-    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-        <table id="reqTable" style="width: 100%; border-collapse: collapse; text-align: left;">
+    <!-- REQUISITION DATA TABLE -->
+    <div class="table-responsive">
+        <table id="reqTable" class="styled-table">
             <thead>
                 <tr style="background: #2c3e50; color: white;">
                     <th style="padding: 15px;">Date Requested</th>
@@ -124,10 +254,10 @@
                     <td style="padding: 15px;">
                         
                         {% if r.status|upper == 'REJECTED' %}
-                            <span style="background: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold;">REJECTED</span>
+                            <span style="background: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold; display: inline-block;">REJECTED</span>
 
                         {% elif r.status|upper == 'ORDERED' %}
-                            <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <div style="display: flex; flex-direction: column; gap: 5px; max-width: 140px;">
                                 <span style="background: #fff3cd; color: #856404; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold; text-align: center; border: 1px solid #ffeeba;">ORDERED</span>
                                 <small style="font-size: 0.7em; color: #666;">Ordered: {{ r.date_ordered or '...' }}</small>
                                 <form action="{{ url_for('receive_requisition', id=r.id) }}" method="POST" style="margin:0;">
@@ -137,13 +267,13 @@
 
                         {% elif r.status|upper == 'RECEIVED' %}
                             <div style="display: flex; flex-direction: column; gap: 2px;">
-                                <span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold; text-align: center; border: 1px solid #c3e6cb;">RECEIVED</span>
+                                <span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold; text-align: center; border: 1px solid #c3e6cb; display: inline-block;">RECEIVED</span>
                                 <small style="font-size: 0.7em; color: #155724;">Arrived: {{ r.date_received or '...' }}</small>
                             </div>
 
                         {% else %}
                             {% if session.role|upper in ['ADMIN', 'SUPERVISOR'] %}
-                            <div style="display: flex; gap: 8px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <form action="{{ url_for('order_requisition', id=r.id) }}" method="POST" style="margin:0;">
                                     <button type="submit" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75em; font-weight: bold;">Mark Ordered</button>
                                 </form>
@@ -152,7 +282,7 @@
                                 </form>
                             </div>
                             {% else %}
-                                <span style="background: #eee; color: #333; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold;">PENDING</span>
+                                <span style="background: #eee; color: #333; padding: 5px 12px; border-radius: 12px; font-size: 0.75em; font-weight: bold; display: inline-block;">PENDING</span>
                             {% endif %}
                         {% endif %}
 
@@ -177,12 +307,22 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem('reqScrollPos'); 
     }
 
-    // --- CHART.JS RENDERING ENGINE ---
-    const dataContainer = document.getElementById('requisition-data');
-    const itemLabels = JSON.parse(dataContainer.getAttribute('data-labels') || '[]');
-    const itemFrequencies = JSON.parse(dataContainer.getAttribute('data-frequencies') || '[]');
-    const itemReceivedQtys = JSON.parse(dataContainer.getAttribute('data-received') || '[]');
+    // --- PARSE JSON FROM SCRIPT TAG ---
+    const chartDataElement = document.getElementById('chart-data');
+    let itemLabels = [], itemFrequencies = [], itemReceivedQtys = [];
 
+    if (chartDataElement) {
+        try {
+            const rawData = JSON.parse(chartDataElement.textContent);
+            itemLabels = rawData.labels || [];
+            itemFrequencies = rawData.frequencies || [];
+            itemReceivedQtys = rawData.received || [];
+        } catch (e) {
+            console.error("Failed to parse chart data JSON:", e);
+        }
+    }
+
+    // --- CHART.JS RENDERING ENGINE ---
     const ctx = document.getElementById('itemVelocityChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -190,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             labels: itemLabels,
             datasets: [
                 {
-                    label: 'Times Ordered (Frequency)',
+                    label: 'Times Ordered',
                     data: itemFrequencies,
                     backgroundColor: '#800000', 
                     borderColor: '#600000',
@@ -198,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Units Confirmed Received (Volume)',
+                    label: 'Units Received',
                     data: itemReceivedQtys,
                     backgroundColor: '#2b6cb0', 
                     borderColor: '#1a446c',
