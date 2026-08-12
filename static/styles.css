@@ -1,5 +1,6 @@
 /* ================================
    FOUR POINTS – MARRIOTT THEME B
+   (Cleaned & Unified Mobile Layout)
    ================================ */
 
 :root {
@@ -8,11 +9,18 @@
   --dark: #1f2933;
   --light: #f5f6f8;
   --card: #ffffff;
+  --border: #ddd;
 }
 
-/* Global */
-body {
+/* Global Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
   font-family: "Segoe UI", Arial, sans-serif;
   background: var(--light);
   color: var(--dark);
@@ -23,18 +31,36 @@ a {
   color: inherit;
 }
 
-/* Layout */
-.container {
+/* Layout Containers */
+.container, .readings-container, .hlp-container {
   max-width: 1200px;
   margin: auto;
   padding: 20px;
+  width: 100%;
 }
 
-/* Header */
+main, .main-wrapper, .app-main-content {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+  min-height: 80vh;
+  width: 100%;
+}
+
+/* Header & Nav */
 header {
   background: var(--maroon);
   color: #fff;
   padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: auto;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -45,13 +71,17 @@ header h1 {
   margin: 0;
 }
 
+header nav {
+  display: flex;
+  gap: 15px;
+}
+
 header nav a {
   color: #fff;
-  margin-left: 20px;
   font-weight: 500;
 }
 
-/* Dashboard */
+/* Dashboard & Grids */
 .dashboard-wrapper {
   margin-top: 30px;
 }
@@ -60,8 +90,8 @@ header nav a {
   margin-bottom: 25px;
 }
 
-.dashboard-header h2 {
-  margin: 0;
+.dashboard-header h2, .page-header h2, .page-title {
+  margin: 0 0 10px 0;
   color: var(--maroon);
 }
 
@@ -70,24 +100,28 @@ header nav a {
   font-weight: 600;
 }
 
-/* Cards Grid */
-.dashboard-grid {
+.dashboard-grid, .card-grid, .hlp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 }
 
-/* Dashboard Cards */
-.dash-card {
+/* Cards */
+.dash-card, .hlp-card, .reading-card, .summary-card {
   background: var(--card);
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 6px solid var(--maroon);
 }
 
-.dash-card h3 {
+.dash-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.dash-card h3, .hlp-card h3 {
   margin-top: 0;
   margin-bottom: 10px;
 }
@@ -95,14 +129,10 @@ header nav a {
 .dash-card p {
   font-size: 14px;
   opacity: 0.8;
+  margin: 0;
 }
 
-.dash-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-}
-
-/* Card Colors */
+/* Specific Card Variants */
 .admin { border-color: #4b0000; }
 .supervisor { border-color: #a37c27; }
 .electrical { border-color: #e63946; }
@@ -111,228 +141,11 @@ header nav a {
 .readings { border-color: #6c757d; }
 .upload { border-color: #198754; }
 
-/* Forms */
-input, select, textarea, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+.reading-card.pending, .summary-card.pending, .card.pending {
+  border-left-color: #dc3545;
 }
-
-button {
-  background: var(--maroon);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #6e1622;
-}
-
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background: #fff;
-}
-
-table th {
-  background: var(--maroon);
-  color: #fff;
-  padding: 10px;
-}
-
-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-.page-title {
-    margin-bottom: 20px;
-    font-size: 24px;
-}
-
-.tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.tab-btn {
-    padding: 10px 15px;
-    border: none;
-    background: #2c3e50;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.tab-btn:hover {
-    background: #1abc9c;
-}
-
-.tab-content {
-    display: none;
-}
-
-.reading-card {
-    background: #ffffff;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.reading-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    margin-bottom: 10px;
-    color: #555;
-}
-
-.reading-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.reading-table td {
-    padding: 8px;
-    border-bottom: 1px solid #eee;
-}
-
-.reading-table td:first-child {
-    font-weight: bold;
-    width: 40%;
-}
-
-.empty-text {
-    color: #888;
-    font-style: italic;
-}
-
-.readings-container {
-    display: grid;
-    gap: 30px;
-}
-
-.section-block {
-    background: #f8f9fb;
-    padding: 20px;
-    border-radius: 12px;
-}
-
-.section-header h3 {
-    margin-bottom: 15px;
-    color: #2c3e50;
-}
-
-.reading-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 18px;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    background: white;
-    border-left: 6px solid #ccc;
-}
-
-.reading-card.pending {
-    border-left-color: #e74c3c;
-}
-
-.reading-card.confirmed {
-    border-left-color: #27ae60;
-}
-
-.reading-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.reading-info .icon {
-    font-size: 28px;
-}
-
-.reading-info .title {
-    font-weight: bold;
-    margin: 0;
-}
-
-.reading-info .meta {
-    font-size: 13px;
-    color: #777;
-}
-
-.reading-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.badge {
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: white;
-}
-
-.badge.red {
-    background: #e74c3c;
-}
-
-.badge.green {
-    background: #27ae60;
-}
-
-.btn.small {
-    padding: 6px 12px;
-    font-size: 13px;
-}
-
-.card.muted {
-    background: #f1f1f1;
-    padding: 15px;
-    border-radius: 8px;
-    color: #666;
-}
-
-.card.empty {
-    padding: 30px;
-    text-align: center;
-    background: #f9f9f9;
-    border-radius: 10px;
-}
-.card.pending { border-left: 6px solid #e74c3c; }
-.card.confirmed { border-left: 6px solid #2ecc71; }
-
-.badge.red { background: #e74c3c; color: white; padding: 4px 8px; }
-.badge.green { background: #2ecc71; color: white; padding: 4px 8px; }
-
-.progress-bar { background: #ddd; border-radius: 10px; }
-.progress { background: #2ecc71; color: white; padding: 6px; }
-
-/* Footer */
-footer {
-  margin-top: 40px;
-  padding: 15px;
-  text-align: center;
-  font-size: 13px;
-  color: #777;
-}
-.readings-container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
-}
-
-.page-header h2 {
-  margin-bottom: 5px;
+.reading-card.confirmed, .summary-card.confirmed, .card.confirmed {
+  border-left-color: #28a745;
 }
 
 .summary-grid {
@@ -343,8 +156,6 @@ footer {
 }
 
 .summary-card {
-  padding: 20px;
-  border-radius: 10px;
   color: #fff;
   text-align: center;
 }
@@ -352,386 +163,171 @@ footer {
 .summary-card.pending { background: #dc3545; }
 .summary-card.confirmed { background: #28a745; }
 
-.section-box {
-  margin-top: 40px;
-}
-
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
-  margin-top: 15px;
-}
-
-.reading-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 15px;
-  border-left: 6px solid;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-}
-
-.reading-card.pending { border-color: #dc3545; }
-.reading-card.confirmed { border-color: #28a745; }
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  color: #fff;
-}
-
-.badge.pending { background: #dc3545; }
-.badge.confirmed { background: #28a745; }
-
-.card-actions {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.btn {
-  padding: 6px 12px;
+/* Forms & UI Elements */
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
   border-radius: 6px;
-  text-decoration: none;
-  color: #fff;
+  border: 1px solid #ccc;
   font-size: 14px;
+}
+
+button, .btn {
+  display: inline-block;
+  background: var(--maroon);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+}
+
+button:hover, .btn:hover {
+  background: #6e1622;
 }
 
 .btn.primary { background: #007bff; }
 .btn.success { background: #28a745; }
 .btn.secondary { background: #6c757d; }
+.btn.small { padding: 6px 12px; font-size: 13px; }
 
-.confirmed-label {
-  color: #28a745;
-  font-weight: bold;
-}
-
-.empty {
-  color: #777;
-  font-style: italic;
-  margin-top: 10px;
-}
-.styled-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:15px;
-}
-
-.styled-table th,
-.styled-table td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:left;
-}
-
-.styled-table th{
-    background:#f5f7fa;
-    font-weight:600;
-}
-
-.styled-table tr:nth-child(even){
-    background:#fafafa;
-}
-.hlp-container { max-width: 1200px; margin: auto; }
-
-.hlp-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.hlp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-  gap: 20px;
-}
-
-.hlp-card {
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
-}
-
-.hlp-card h3 { margin-bottom: 10px; }
-
-.hlp-total {
-  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+/* Badges */
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
   color: #fff;
-  padding: 30px;
-  text-align: center;
-  border-radius: 12px;
-  margin: 30px 0;
+  display: inline-block;
+}
+.badge.red, .badge.pending { background: #dc3545; }
+.badge.green, .badge.confirmed { background: #28a745; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 8px; border-bottom: 1px solid #ddd; }
-
-textarea, input[type=text] {
-  width: 100%;
-  padding: 8px;
+.tab-btn {
+  padding: 10px 15px;
+  border: none;
+  background: #2c3e50;
+  color: white;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  cursor: pointer;
 }
 
-.hlp-confirm { text-align: center; }
+.tab-btn:hover { background: #1abc9c; }
+.tab-content { display: none; }
 
-.locked-text {
-  color: #888;
+/* Alerts & Notices */
+.flash-messages { margin: 20px 0; }
+.alert {
+  padding: 15px;
+  background-color: var(--maroon);
+  color: white;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   MOBILE & RESPONSIVE TABLE FIXES
+   ========================================================================== */
+
+/* Outer container wrapper required for smooth horizontal table scroll */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 15px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+/* Standard & Styled Tables */
+table, .styled-table, .reading-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  min-width: 600px; /* Forces wide columns to stay legible on mobile */
+}
+
+table th, .styled-table th {
+  background: var(--maroon) !important;
+  color: #ffffff !important;
+  padding: 12px 10px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+table td, .styled-table td {
+  border: 1px solid var(--border);
+  padding: 10px;
+  text-align: center;
+  color: var(--dark) !important;
+}
+
+.styled-table td strong {
+  color: var(--dark) !important;
   font-weight: bold;
 }
-/* Flash Messages - For "Access Denied" or "Locked" alerts */
-.flash-messages {
-    margin: 20px 0;
-}
 
-.alert {
-    padding: 15px;
-    background-color: var(--maroon);
-    color: white;
-    border-radius: 6px;
-    text-align: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* Header Container Fix - To keep the Marriott feel clean */
-.header-container {
-    max-width: 1200px;
-    margin: auto;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* Mobile Responsiveness for Header */
-@media (max-width: 768px) {
-    header {
-        flex-direction: column;
-        text-align: center;
-    }
-    header nav {
-        margin-top: 15px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-    }
-    header nav a {
-        margin-left: 0;
-        font-size: 14px;
-    }
-}
-
-/* Fix for the main layout spacing */
-main {
-    max-width: 1200px;
-    margin: 30px auto;
-    padding: 0 20px;
-    min-height: 80vh;
-}
-/* ================================
-   FIXED STYLED TABLE VISIBILITY
-   ================================ */
-
-.styled-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    background: #fff; /* Ensure table background is white */
-}
-
-/* Force Header Background to Maroon and Text to White */
-.styled-table th {
-    background: #8b1d2c !important; /* Force Maroon background */
-    color: #ffffff !important;      /* Force White text for KWH, Time, etc. */
-    padding: 12px 10px;
-    text-align: center;
-    font-weight: 600;
-    border: 1px solid #ddd;
-}
-
-/* Force Table Data (the actual readings) to have Dark Text */
-.styled-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-    color: #1f2933 !important; /* Dark text for visibility */
-}
-
-/* Force the Time labels (06:00, etc.) to be Dark and Bold */
-.styled-table td strong {
-    color: #1f2933 !important; 
-    font-weight: bold;
-}
-
-/* Force Input fields inside the table to be visible */
 .styled-table td input {
-    width: 100%;
-    padding: 6px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    color: #000 !important;      /* Black text for user typing */
-    background: #fff !important; /* White background for inputs */
-    text-align: center;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #000 !important;
+  background: #fff !important;
+  text-align: center;
 }
 
-/* Zebra striping for rows - making them very light so text stays visible */
 .styled-table tr:nth-child(even) {
-    background-color: #f9f9f9;
+  background-color: #f9f9f9;
 }
-/* ==========================================================================
-   Mobile Responsive Adjustments
-   ========================================================================== */
 
+/* Breakpoint Adjustments */
 @media screen and (max-width: 768px) {
-  /* Prevent horizontal scrolling */
-  html, body {
-    overflow-x: hidden;
-    font-size: 14px;
-  }
-
-  /* Stack main layout vertically */
-  .container, .main-wrapper, .dashboard-grid {
-    display: flex;
+  header {
     flex-direction: column;
-    width: 100% !important;
-    padding: 10px !important;
-    margin: 0 !important;
+    text-align: center;
+    padding: 15px;
   }
 
-  /* Convert sidebar into a collapsible/full-width header block */
-  .sidebar {
-    width: 100% !important;
-    position: relative !important;
-    height: auto !important;
-    padding: 15px !important;
+  header nav {
+    margin-top: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
-  /* Ensure tables scroll smoothly horizontally instead of breaking layout */
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    width: 100%;
+  main, .container, .readings-container, .app-main-content {
+    padding: 12px;
+    margin-top: 15px;
   }
 
-  /* Touch-friendly buttons and inputs */
-  button, input, select, .btn {
-    width: 100% !important;
-    min-height: 44px;
-    font-size: 16px !important; /* Prevents auto-zoom on iOS */
-    margin-bottom: 8px;
+  .dashboard-grid, .card-grid, .hlp-grid, .summary-grid {
+    grid-template-columns: 1fr;
   }
 
-  /* Form controls side-by-side to full width */
-  .form-group, .input-group {
-    flex-direction: column !important;
-    width: 100% !important;
+  /* Prevent iOS zooming on form elements */
+  input, select, textarea {
+    font-size: 16px !important;
   }
 }
-/* Ensure mobile containers scale properly without side-scrolling */
-@media screen and (max-width: 768px) {
-  *, *::before, *::after {
-    box-sizing: border-box !important;
-  }
 
-  body {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100vw !important;
-    overflow-x: hidden !important;
-  }
-
-  .sidebar, nav, header {
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-  }
-
-  .content, .main-content, container, .container-fluid {
-    margin-left: 0 !important;
-    width: 100% !important;
-    padding: 12px !important;
-  }
-
-  .table-responsive, table {
-    display: block !important;
-    width: 100% !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-/* ==========================================================================
-   MOBILE RESPONSIVE OVERRIDES
-   ========================================================================== */
-@media screen and (max-width: 768px) {
-    /* Prevent horizontal page overflow */
-    html, body {
-        overflow-x: hidden !important;
-        width: 100% !important;
-    }
-
-    /* Adjust main content padding for mobile top bar */
-    .app-main-content {
-        padding: 70px 16px 20px 16px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Page Titles & Headers */
-    .page-title h2 {
-        font-size: 1.35rem !important;
-        margin-bottom: 4px !important;
-    }
-
-    .page-title p {
-        font-size: 0.85rem !important;
-    }
-
-    /* Dashboard Cards - Clean Single-Column Stacking */
-    .dashboard-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        margin-top: 15px !important;
-    }
-
-    .dash-card {
-        width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 16px 18px !important;
-        border-radius: 8px !important;
-    }
-
-    .dash-card h3 {
-        font-size: 1rem !important;
-        margin-bottom: 4px !important;
-    }
-
-    .dash-card p {
-        font-size: 0.8rem !important;
-    }
-
-    /* Tables & Forms Mobile Handling */
-    table {
-        display: block !important;
-        width: 100% !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        white-space: nowrap !important;
-    }
-
-    input, select, textarea, button {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
+/* Footer */
+footer {
+  margin-top: 40px;
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #777;
 }
