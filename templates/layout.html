@@ -341,8 +341,35 @@
             <p>&copy; 2026 HLP System — Four Points Engineering</p>
         </footer>
     </main>
+<button id="pwaInstallBtn" style="display: none; background: #800000; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+  📲 Install App
+</button>
 
+<script>
+let deferredPrompt;
+const installBtn = document.getElementById('pwaInstallBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent default browser banner
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show your custom install button
+  installBtn.style.display = 'block';
+});
+
+installBtn.addEventListener('click', () => {
+  installBtn.style.display = 'none';
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      deferredPrompt = null;
+    });
+  }
+});
+</script>
     <script>
+        // Register from root scope '/sw.js', NOT '/static/sw.js'
+navigator.serviceWorker.register('/sw.js');
         // Drawer Toggle Logic
         const menuToggleBtn = document.getElementById('menuToggleBtn');
         const appSidebar = document.getElementById('appSidebar');

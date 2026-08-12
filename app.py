@@ -389,7 +389,12 @@ def inject_pending_counts():
 # =====================
 
 from flask import send_from_directory
+# In your Flask app.py / routes file
+from flask import send_from_directory
 
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 @app.route('/manifest.json')
 def serve_manifest():
     return send_from_directory('static', 'manifest.json')
