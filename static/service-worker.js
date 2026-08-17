@@ -1,16 +1,18 @@
-const CACHE_NAME = 'hlp-system-v1';
+const CACHE_NAME = 'hlp-system-v2';
 const ASSETS_TO_CACHE = [
     '/',
-    '/static/manifest.json',
+    '/manifest.json',
     '/static/images/icon-192.png',
     '/static/images/icon-512.png'
 ];
 
-// Install: Cache critical assets
+// Install: Cache critical assets individually so failure of one doesn't crash SW
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
+            return Promise.allSettled(
+                ASSETS_TO_CACHE.map((url) => cache.add(url))
+            );
         }).then(() => self.skipWaiting())
     );
 });
@@ -30,16 +32,17 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: Try network first, fall back to cache if offline
+// Fetch: Network-first strategy for dynamic application requests
 self.addEventListener('fetch', (event) => {
-    // Only handle GET requests
     if (event.request.method !== 'GET') return;
+
+    // Do not cache non-http/https schemes or browser extension requests
+    if (!event.request.url.startsWith('http')) return;
 
     event.respondWith(
         fetch(event.request)
             .then((networkResponse) => {
-                // Update cache with fresh response if valid
-                if (networkResponse && networkResponse.status === 200) {
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
@@ -48,7 +51,6 @@ self.addEventListener('fetch', (event) => {
                 return networkResponse;
             })
             .catch(() => {
-                // Fallback to cache when offline
                 return caches.match(event.request);
             })
     );
