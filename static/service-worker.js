@@ -1,12 +1,10 @@
-const CACHE_NAME = 'hlp-system-v2';
+const CACHE_NAME = 'hlp-system-v3';
 const ASSETS_TO_CACHE = [
     '/',
-    '/manifest.json',
-    '/static/images/icon-192.png',
-    '/static/images/icon-512.png'
+    '/manifest.json'
 ];
 
-// Install: Cache critical assets individually so failure of one doesn't crash SW
+// Install: Cache critical assets without PNG dependencies
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -32,11 +30,9 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: Network-first strategy for dynamic application requests
+// Fetch: Network first fallback
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
-
-    // Do not cache non-http/https schemes or browser extension requests
     if (!event.request.url.startsWith('http')) return;
 
     event.respondWith(
