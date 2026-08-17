@@ -395,6 +395,7 @@ from flask import send_from_directory
 from flask import send_from_directory
 
 @app.route('/sw.js')
+@app.route('/service-worker.js')
 def serve_sw():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
