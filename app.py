@@ -392,17 +392,15 @@ from flask import send_from_directory
 # In your Flask app.py / routes file
 from flask import send_from_directory
 
+from flask import send_from_directory
+
 @app.route('/sw.js')
 def serve_sw():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+
 @app.route('/manifest.json')
 def serve_manifest():
-    return send_from_directory('static', 'manifest.json')
-
-@app.route('/service-worker.js')
-def serve_service_worker():
-    return send_from_directory('static', 'service-worker.js')
-@app.route("/", methods=["GET", "POST"])
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":

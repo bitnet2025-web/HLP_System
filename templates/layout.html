@@ -2,20 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Four Points — HLP System</title>
-    
-    <!-- PWA Settings -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HLP System — Four Points Engineering</title>
+
+    <!-- PWA Manifest & iOS Compatibility Meta Tags -->
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/png" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
-    <link rel="apple-touch-icon" href="https://storage.googleapis.com/hlp-images/HLP-Icon.png">
-    
     <meta name="theme-color" content="#800000">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HLP System">
-    <meta name="application-name" content="HLP System">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-192.png') }}">
     
     <style>
         /* ==========================================================================
@@ -59,7 +56,7 @@
             left: 0;
             display: flex;
             flex-direction: column;
-            z-index: 1002;
+            z-index: 1005;
             box-shadow: 2px 0 10px rgba(0,0,0,0.2);
             transition: transform 0.3s ease-in-out;
         }
@@ -130,6 +127,26 @@
             gap: 8px;
         }
 
+        .pwa-install-container {
+            padding: 10px 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        #pwaInstallBtn {
+            width: 100%;
+            background: var(--maroon);
+            color: white;
+            padding: 10px;
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
         /* --- MAIN CONTENT CONTAINER --- */
         .app-main-content {
             margin-left: var(--sidebar-width);
@@ -165,7 +182,7 @@
                 align-items: center;
                 justify-content: space-between;
                 padding: 0 16px;
-                z-index: 1001;
+                z-index: 1003;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             }
 
@@ -205,7 +222,7 @@
                 right: 0;
                 bottom: 0;
                 background: rgba(0, 0, 0, 0.5);
-                z-index: 1001;
+                z-index: 1004;
             }
 
             .sidebar-overlay.active {
@@ -235,7 +252,7 @@
             /* Force All Layout Grids into Clean Single Columns */
             .dashboard-grid, .form-grid, .grid, .row,
             div[style*="display: grid"], 
-            div[style*="display: flex"]:not(.mobile-header):not(.sidebar-user) {
+            div[style*="display: flex"]:not(.mobile-header):not(.sidebar-user):not(.pwa-install-container) {
                 display: flex !important;
                 flex-direction: column !important;
                 grid-template-columns: 1fr !important;
@@ -269,7 +286,7 @@
         }
 
         @media print {
-            .mobile-header, .app-sidebar, .sidebar-overlay { display: none !important; }
+            .mobile-header, .app-sidebar, .sidebar-overlay, .no-print { display: none !important; }
             .app-main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
         }
     </style>
@@ -313,6 +330,12 @@
             <li><a href="{{ url_for('hlp_calculator') }}">🧮 HLP Calculator</a></li>
         </ul>
 
+        <div class="pwa-install-container">
+            <button id="pwaInstallBtn" style="display: none;">
+                📲 Install App
+            </button>
+        </div>
+
         <div class="sidebar-user">
             <div>🔑 Role: <strong>{{ session.role|upper if session and session.role else 'GUEST' }}</strong></div>
             <a href="{{ url_for('logout') }}" style="color: #ff4d4d; text-decoration: none; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; gap: 5px; margin-top: 5px;">
@@ -341,35 +364,8 @@
             <p>&copy; 2026 HLP System — Four Points Engineering</p>
         </footer>
     </main>
-<button id="pwaInstallBtn" style="display: none; background: #800000; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
-  📲 Install App
-</button>
 
-<script>
-let deferredPrompt;
-const installBtn = document.getElementById('pwaInstallBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevent default browser banner
-  e.preventDefault();
-  deferredPrompt = e;
-  // Show your custom install button
-  installBtn.style.display = 'block';
-});
-
-installBtn.addEventListener('click', () => {
-  installBtn.style.display = 'none';
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      deferredPrompt = null;
-    });
-  }
-});
-</script>
     <script>
-        // Register from root scope '/sw.js', NOT '/static/sw.js'
-navigator.serviceWorker.register('/sw.js');
         // Drawer Toggle Logic
         const menuToggleBtn = document.getElementById('menuToggleBtn');
         const appSidebar = document.getElementById('appSidebar');
@@ -385,12 +381,35 @@ navigator.serviceWorker.register('/sw.js');
             sidebarOverlay.addEventListener('click', toggleSidebar);
         }
 
-        // Service Worker Registration for PWA Installation
+        // Unified Service Worker & PWA Install Manager
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwaInstallBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) {
+                installBtn.style.display = 'flex';
+            }
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', () => {
+                installBtn.style.display = 'none';
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(() => {
+                        deferredPrompt = null;
+                    });
+                }
+            });
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('PWA Service Worker Active:', reg.scope))
-                    .catch(err => console.error('PWA Registration Error:', err));
+                    .then(reg => console.log('PWA SW Registered:', reg.scope))
+                    .catch(err => console.error('PWA SW Registration Error:', err));
             });
         }
     </script>
