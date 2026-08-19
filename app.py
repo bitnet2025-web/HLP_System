@@ -884,21 +884,28 @@ def update_hlp_rates():
 
 import sqlite3
 from datetime import datetime
+from zoneinfo import ZoneInfo  # Standard library in Python 3.9+
 from flask import request, session, redirect, url_for, render_template, flash
+
+# Define local timezone (East Africa Time: UTC+3)
+LOCAL_TZ = ZoneInfo("Africa/Nairobi")
+
 @app.route('/ppm', endpoint='ppm')
 @app.route("/ppm_hub", methods=["GET", "POST"])
 @login_required
 def ppm_hub():
     user_role = session.get("role", "").upper()
-    now = datetime.now()
-    today_str = now.strftime("%Y-%m-%d %H:%M")
-    month_prefix = now.strftime("%Y-%m")
+    
+    # 1. Fetch current time in East Africa Time (EAT)
+    now_eat = datetime.now(LOCAL_TZ)
+    today_str = now_eat.strftime("%Y-%m-%d %H:%M")
+    month_prefix = now_eat.strftime("%Y-%m")
     
     # Fallback if get_current_month_str() is not globally available
     try:
         current_month = get_current_month_str()
     except NameError:
-        current_month = now.strftime("%B %Y")
+        current_month = now_eat.strftime("%B %Y")
     
     search_room = request.args.get("search_room", "").strip()
 
@@ -940,7 +947,7 @@ def ppm_hub():
                     ).fetchone()
                     section_name = asset["asset_section"].upper() if asset and asset["asset_section"] else "GENERAL"
 
-                # Insert into section_ppm WITH section_name included
+                # Insert into section_ppm WITH local EAT section_name and timestamps
                 conn.execute("""
                     INSERT INTO section_ppm (
                         ppm_date, ppm_month, section_name, equipment_name, 
@@ -1087,14 +1094,6 @@ def ppm_hub():
         search_room=search_room,
         archived_data=archived_data
     )
-import sqlite3
-
-from datetime import datetime
-from zoneinfo import ZoneInfo  # Built-in Python 3.9+
-
-# Define local timezone (East Africa Time)
-LOCAL_TZ = ZoneInfo("Africa/Nairobi")
-
 @app.route('/verify_ppm_action/<action_role>/<table_type>/<int:record_id>', methods=['POST'])
 def verify_ppm_action(action_role, table_type, record_id):
     user_role = session.get('user_role', '').upper()
