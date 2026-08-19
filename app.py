@@ -437,24 +437,20 @@ def dashboard():
     time_range = request.args.get("range", "monthly")
     current_month = datetime.now().strftime("%B %Y")
 
-    # 1. Provide fallback/default values or replace these with your database queries:
     bar_labels = ["General", "Plant", "Kitchen", "Laundry", "Building"]
     machinery_dept_completed = [0, 0, 0, 0, 0]
     machinery_dept_pending = [0, 0, 0, 0, 0]
-    requisition_dept_costs = [0, 0, 0, 0, 0]
+    requisition_dept_costs = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     machinery_completed = 0
     machinery_pending = 0
     room_completed = 0
     room_pending = 0
 
-    # ... [YOUR EXISTING DATABASE QUERY/AGGREGATION LOGIC HERE] ...
-
-    # 2. Return render_template passing ALL variables expected by dashboard.html:
     return render_template(
         "dashboard.html",
-        role=session.get("role"),
-        user=session.get("user"),
+        role=session.get("role", "TECHNICIAN"),
+        user=session.get("user", "User"),
         current_month=current_month,
         time_range=time_range,
         machinery_completed=machinery_completed,
@@ -464,9 +460,8 @@ def dashboard():
         bar_labels=bar_labels,
         machinery_dept_completed=machinery_dept_completed,
         machinery_dept_pending=machinery_dept_pending,
-        requisition_dept_costs=requisition_dept_costs,
+        requisition_dept_costs=requisition_dept_costs
     )
-
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
