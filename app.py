@@ -1076,6 +1076,12 @@ def ppm_hub():
     )
 import sqlite3
 
+from datetime import datetime
+from zoneinfo import ZoneInfo  # Built-in Python 3.9+
+
+# Define local timezone (East Africa Time)
+LOCAL_TZ = ZoneInfo("Africa/Nairobi")
+
 @app.route('/verify_ppm_action/<action_role>/<table_type>/<int:record_id>', methods=['POST'])
 def verify_ppm_action(action_role, table_type, record_id):
     user_role = session.get('user_role', '').upper()
@@ -1087,9 +1093,10 @@ def verify_ppm_action(action_role, table_type, record_id):
     else:
         approver_name = session.get('user_name') or session.get('username') or 'Verified Staff'
 
-    current_time = datetime.now().strftime('%Y-%m-%d %H:%M')
+    # Correct time to local Nairobi/EAT time
+    current_time = datetime.now(LOCAL_TZ).strftime('%Y-%m-%d %H:%M')
 
-    # Update database using your native sqlite3 setup
+    # Update database using native sqlite3
     with sqlite3.connect(DATABASE) as conn:
         if table_type == 'section':
             if action_role == 'supervisor':
@@ -1114,8 +1121,9 @@ def verify_ppm_action(action_role, table_type, record_id):
                     (approver_name, current_time, record_id)
                 )
 
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
         return jsonify({
+            'success': True,
             'status': 'success',
             'approver': approver_name,
             'timestamp': current_time
@@ -1127,14 +1135,21 @@ def verify_ppm_action(action_role, table_type, record_id):
 
 @app.route('/delete_ppm_entry/<table_type>/<int:record_id>', methods=['POST'])
 def delete_ppm_entry(table_type, record_id):
-    with sqlite3.connect(DATABASE) as conn:
-        if table_type == 'section':
-            conn.execute("DELETE FROM section_ppm WHERE id = ?", (record_id,))
-        elif table_type == 'room':
-            conn.execute("DELETE FROM room_ppm WHERE id = ?", (record_id,))
-    
-    return redirect(url_for('ppm_hub'))
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            if table_type == 'section':
+                conn.execute("DELETE FROM section_ppm WHERE id = ?", (record_id,))
+            elif table_type == 'room':
+                conn.execute("DELETE FROM room_ppm WHERE id = ?", (record_id,))
 
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': True, 'message': 'Entry deleted'})
+
+        return redirect(url_for('ppm_hub'))
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': str(e)}), 400
+        return redirect(url_for('ppm_hub'))
 
 @app.route('/edit_ppm_entry/<table_type>/<int:record_id>', methods=['POST'])
 def edit_ppm_entry(table_type, record_id):

@@ -858,25 +858,26 @@
 
     // Delete handling without scroll jump
     function deleteEntryNoJump(type, recordId) {
-        if (!confirm('Are you sure you want to delete this PPM record?')) return;
+    if (!confirm('Are you sure you want to delete this PPM record?')) return;
 
-        fetch(`/ppm_hub/delete/${type}/${recordId}`, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const row = document.getElementById(`row-${type}-${recordId}`);
-                if (row) row.remove();
-            } else {
-                alert(data.message || 'Error deleting entry.');
-            }
-        })
-        .catch(() => {
-            window.location.href = `/ppm_hub/delete/${type}/${recordId}`;
-        });
-    }
+    fetch(`/delete_ppm_entry/${type}/${recordId}`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.status === 'success') {
+            const row = document.getElementById(`row-${type}-${recordId}`);
+            if (row) row.remove();
+        } else {
+            alert(data.message || 'Error deleting entry.');
+        }
+    })
+    .catch(() => {
+        // Fallback standard submit
+        window.location.href = `/delete_ppm_entry/${type}/${recordId}`;
+    });
+}
 
     // Submit Edit Form via AJAX
     function submitEditEntryForm(event) {
