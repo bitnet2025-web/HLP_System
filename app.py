@@ -5,7 +5,18 @@ from datetime import date, datetime
 from collections import Counter
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from datetime import datetime, timedelta, timezone
 
+# Define East Africa Time (UTC + 3) globally
+EAT = timezone(timedelta(hours=3))
+
+def get_eat_now():
+    """Returns the current EAT datetime object."""
+    return datetime.now(timezone.utc).astimezone(EAT)
+
+def get_eat_time_str(fmt='%Y-%m-%d %H:%M'):
+    """Returns a formatted EAT time string."""
+    return get_eat_now().strftime(fmt)
 DATABASE = 'hlp_system.db'
 
 app = Flask(__name__)
