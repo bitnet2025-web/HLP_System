@@ -1,13 +1,14 @@
 import os
 import json
 import sqlite3
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from collections import Counter
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from datetime import datetime, timedelta, timezone
 
-# Define East Africa Time (UTC + 3) globally
+# =====================
+# GLOBAL TIMEZONE CONFIG (EAT / UTC+3)
+# =====================
 EAT = timezone(timedelta(hours=3))
 
 def get_eat_now():
@@ -17,6 +18,7 @@ def get_eat_now():
 def get_eat_time_str(fmt='%Y-%m-%d %H:%M'):
     """Returns a formatted EAT time string."""
     return get_eat_now().strftime(fmt)
+
 DATABASE = 'hlp_system.db'
 
 app = Flask(__name__)
@@ -122,16 +124,17 @@ def init_db():
                 water_bh_rate REAL DEFAULT 68.00,
                 lpg_rate REAL DEFAULT 113.00,
                 diesel_rate REAL DEFAULT 222.00,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TEXT
             )
         ''')
         
         cursor = conn.execute('SELECT COUNT(*) FROM hlp_rates')
         if cursor.fetchone()[0] == 0:
+            current_now = get_eat_time_str('%Y-%m-%d %H:%M:%S')
             conn.execute('''
-                INSERT INTO hlp_rates (elect_rate, water_ncc_rate, water_bh_rate, lpg_rate, diesel_rate)
-                VALUES (19.33, 67.00, 68.00, 113.00, 222.00)
-            ''')
+                INSERT INTO hlp_rates (elect_rate, water_ncc_rate, water_bh_rate, lpg_rate, diesel_rate, updated_at)
+                VALUES (19.33, 67.00, 68.00, 113.00, 222.00, ?)
+            ''', (current_now,))
 
         # 5. HLP Calculator Logs Table
         conn.execute('''
@@ -145,7 +148,7 @@ def init_db():
                 diesel_units REAL, diesel_rate REAL, diesel_cost REAL,
                 total_cost REAL,
                 created_by TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT
             )
         ''')
 
@@ -243,7 +246,6 @@ try:
     init_db()
 except Exception as e:
     print(f"Database setup error: {e}")
-
 # =====================
 # USER HANDLING
 # =====================
