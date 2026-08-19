@@ -78,7 +78,7 @@
         line-height: 1.4;
     }
 
-    /* Distinct Accent Borders for Dashboard Modules */
+    /* Accent Borders */
     .dash-card.admin { border-left: 5px solid #2c3e50; }
     .dash-card.ppm { border-left: 5px solid #e67e22; }
     .dash-card.requisitions { border-left: 5px solid #27ae60; }
@@ -117,23 +117,23 @@
     <div class="dashboard-grid">
 
         {% if session.get('role', '').upper() == "ADMIN" %}
-        <a href="{{ url_for('admin_dashboard') if 'admin_dashboard' in endpoints else url_for('admin') if 'admin' in endpoints else '#' }}" class="dash-card admin">
+        <a href="{{ url_for('admin') }}" class="dash-card admin">
             <h3>⚙️ Admin Console</h3>
             <p>System control & rate management</p>
         </a>
         {% endif %}
 
-        <a href="{{ url_for('ppm_hub') if 'ppm_hub' in endpoints else url_for('ppm') if 'ppm' in endpoints else '#' }}" class="dash-card ppm">
+        <a href="{{ url_for('ppm') }}" class="dash-card ppm">
             <h3>🛠️ PPM Management Desk</h3>
             <p>Planned preventative maintenance schedules</p>
         </a>
 
-        <a href="{{ url_for('material_requisition') if 'material_requisition' in endpoints else url_for('requisitions') if 'requisitions' in endpoints else '#' }}" class="dash-card requisitions">
+        <a href="{{ url_for('material_requisition') }}" class="dash-card requisitions">
             <h3>📋 Material Requisition</h3>
             <p>Request parts, tools & engineering supplies</p>
         </a>
 
-        <a href="{{ url_for('hlp_calculator') if 'hlp_calculator' in endpoints else url_for('calculator') if 'calculator' in endpoints else '#' }}" class="dash-card calculator">
+        <a href="{{ url_for('hlp_calculator') }}" class="dash-card calculator">
             <h3>🧮 HLP Calculator</h3>
             <p>Utility consumption & financial metrics</p>
         </a>
