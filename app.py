@@ -467,10 +467,10 @@ def dashboard():
         requisition_dept_costs=requisition_dept_costs,
     )
 
-@app.route("/admin/dashboard", methods=["GET", "POST"])
+@app.route("/admin", methods=["GET", "POST"])
 @login_required
-def dash_admin():
-    # Verify Admin or Supervisor Role (matches your login session structure)
+def admin():
+    # Verify Admin or Supervisor Role
     user_role = session.get("role", "").upper()
     if user_role not in ["ADMIN", "SUPERVISOR"]:
         flash("Access denied. Admin or Supervisor privileges required.", "danger")
@@ -492,8 +492,9 @@ def dash_admin():
                 "lpg": float(request.form.get("lpg_rate", 18.5))
             })
             flash("Global rates updated successfully!", "success")
+            return redirect(url_for("admin"))
 
-        # HANDLE PASSWORD RESET
+        # 2. HANDLE PASSWORD RESET
         elif action == "reset_password":
             target_user = request.form.get("target_user", "").lower().strip()
             new_password = request.form.get("new_password", "").strip()
@@ -507,9 +508,11 @@ def dash_admin():
                 if save_users(USERS):
                     flash(f"Password updated and saved permanently for '{target_user}'!", "success")
                 else:
-                    flash(f"Password updated in session, but failed to write to file.", "warning")
+                    flash("Password updated in session, but failed to write to file.", "warning")
             else:
                 flash(f"User '{target_user}' not found in system.", "danger")
+            
+            return redirect(url_for("admin"))
 
     # GET REQUEST LOGIC
     current_rates = READINGS.get("rates", {
