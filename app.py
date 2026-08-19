@@ -869,49 +869,65 @@ def update_hlp_rates():
     flash("HLP Base Rates updated successfully!", "success")
     return redirect(url_for('hlp_calculator'))
 
-@app.route("/engineering/ppm_hub", methods=["GET", "POST"])
+import sqlite3
+from datetime import datetime
+from flask import request, session, redirect, url_for, render_template, flash
+
+@app.route("/ppm_hub", methods=["GET", "POST"])
 @login_required
 def ppm_hub():
     user_role = session.get("role", "").upper()
-    today_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-    month_prefix = datetime.now().strftime("%Y-%m")
-    current_month = get_current_month_str()
+    now = datetime.now()
+    today_str = now.strftime("%Y-%m-%d %H:%M")
+    month_prefix = now.strftime("%Y-%m")
+    
+    # Fallback if get_current_month_str() is not globally available
+    try:
+        current_month = get_current_month_str()
+    except NameError:
+        current_month = now.strftime("%B %Y")
     
     search_room = request.args.get("search_room", "").strip()
 
     with sqlite3.connect(DATABASE) as conn:
         conn.row_factory = sqlite3.Row
         
-        # --- POST REQUESTS: HANDLING HANDLER FORMS ---
+        # --- POST REQUESTS: HANDLING FORM SUBMISSIONS ---
         if request.method == "POST":
             form_type = request.form.get("form_type")
             
             if form_type == "register_asset":
-                # Save new equipment field tracking data
-                conn.execute("""
-                    INSERT INTO ppm_assets (machine_name, asset_section, model_serial, maintenance_frequency, next_schedule_date)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (
-                    request.form['machine_name'], 
-                    request.form['asset_section'], 
-                    request.form['model_serial'], 
-                    request.form['maintenance_frequency'], 
-                    request.form['next_schedule_date']
-                ))
+                machine_name = request.form.get("machine_name", "").strip()
+                asset_section = request.form.get("asset_section", "").strip().upper()
+                model_serial = request.form.get("model_serial", "").strip()
+                maintenance_frequency = request.form.get("maintenance_frequency", "").strip()
+                next_schedule_date = request.form.get("next_schedule_date", "").strip()
+                
+                if machine_name and asset_section:
+                    conn.execute("""
+                        INSERT INTO ppm_assets (machine_name, asset_section, model_serial, maintenance_frequency, next_schedule_date)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (machine_name, asset_section, model_serial, maintenance_frequency, next_schedule_date))
+                    flash(f"Asset '{machine_name}' registered successfully!", "success")
+                else:
+                    flash("Failed to register asset. Machine name and section are required.", "danger")
                 
             elif form_type == "log_section_ppm":
-                equipment_name = request.form['equipment_name']
+                equipment_name = request.form.get("equipment_name", "").strip()
+                technician_name = request.form.get("technician_name", "").strip()
+                work_details = request.form.get("work_details", "").strip()
+                update_next_date = request.form.get("update_next_date", "").strip()
 
-                # 1. Look up section_name directly from ppm_assets OR read from form field
-                section_name = request.form.get('section_name')
+                # Look up section_name directly from ppm_assets OR read from form field
+                section_name = request.form.get("section_name", "").strip().upper()
                 if not section_name:
                     asset = conn.execute(
                         "SELECT asset_section FROM ppm_assets WHERE machine_name = ?", 
                         (equipment_name,)
                     ).fetchone()
-                    section_name = asset['asset_section'] if asset else "GENERAL"
+                    section_name = asset["asset_section"].upper() if asset and asset["asset_section"] else "GENERAL"
 
-                # 2. Insert into section_ppm WITH section_name included
+                # Insert into section_ppm WITH section_name included
                 conn.execute("""
                     INSERT INTO section_ppm (
                         ppm_date, ppm_month, section_name, equipment_name, 
@@ -923,50 +939,59 @@ def ppm_hub():
                     current_month, 
                     section_name, 
                     equipment_name, 
-                    request.form['technician_name'], 
-                    request.form['work_details']
+                    technician_name, 
+                    work_details
                 ))
                 
-                # 3. Update Asset Next Schedule Loop Link
-                conn.execute(
-                    "UPDATE ppm_assets SET next_schedule_date = ? WHERE machine_name = ?", 
-                    (request.form['update_next_date'], equipment_name)
-                )
+                # Update Asset Next Schedule Date if provided
+                if update_next_date:
+                    conn.execute(
+                        "UPDATE ppm_assets SET next_schedule_date = ? WHERE machine_name = ?", 
+                        (update_next_date, equipment_name)
+                    )
+                flash(f"PPM record logged for {equipment_name}.", "success")
                 
             elif form_type == "log_room_ppm":
-                # Log room entries
-                conn.execute("""
-                    INSERT INTO room_ppm (
-                        ppm_date, ppm_month, room_number, technician_name, 
-                        notes, supervisor_name, chief_engineer_name
-                    )
-                    VALUES (?, ?, ?, ?, ?, 'Pending Signature', 'Pending Signature')
-                """, (
-                    today_str, 
-                    current_month, 
-                    request.form['room_number'], 
-                    request.form['technician_name'], 
-                    request.form['notes']
-                ))
+                room_number = request.form.get("room_number", "").strip()
+                technician_name = request.form.get("technician_name", "").strip()
+                notes = request.form.get("notes", "").strip()
+
+                if room_number:
+                    conn.execute("""
+                        INSERT INTO room_ppm (
+                            ppm_date, ppm_month, room_number, technician_name, 
+                            notes, supervisor_name, chief_engineer_name
+                        )
+                        VALUES (?, ?, ?, ?, ?, 'Pending Signature', 'Pending Signature')
+                    """, (
+                        today_str, 
+                        current_month, 
+                        room_number, 
+                        technician_name, 
+                        notes
+                    ))
+                    flash(f"PPM record logged for Room {room_number}.", "success")
+                else:
+                    flash("Room number is required.", "danger")
                 
             conn.commit()
-            return redirect(url_for('ppm_hub'))
+            return redirect(url_for("ppm_hub"))
 
         # --- GET REQUESTS: RENDER LOG MODULES ---
         
-        # 1. Fetch Registered Assets & Alerts
+        # 1. Fetch Registered Assets & Schedule Alerts
         assets = conn.execute("SELECT * FROM ppm_assets ORDER BY machine_name ASC").fetchall()
         alerts = conn.execute("SELECT * FROM ppm_assets WHERE next_schedule_date <= ?", (today_str,)).fetchall()
         
-        # 2. Master Schedules Layout Grouping
+        # 2. Master Schedules Grouping by Section
         schedules_by_field = {}
         for section in ["ELECTRICAL", "PLUMBING", "HVAC", "KITCHEN", "LAUNDRY", "BOILER"]:
             schedules_by_field[section] = conn.execute(
-                "SELECT * FROM ppm_assets WHERE asset_section = ?", 
+                "SELECT * FROM ppm_assets WHERE UPPER(asset_section) = ?", 
                 (section,)
             ).fetchall()
 
-        # 3. ACTIVE DATA LOOP: Single unified query catching all active serviced logs
+        # 3. Active Serviced Logs for Current Month
         raw_serviced_logs = conn.execute("""
             SELECT s.*, COALESCE(s.section_name, a.asset_section, 'GENERAL') as resolved_section 
             FROM section_ppm s
@@ -980,14 +1005,14 @@ def ppm_hub():
         # Pre-populate default sections dictionary
         ledgers = {s: [] for s in ["ELECTRICAL", "PLUMBING", "HVAC", "KITCHEN", "LAUNDRY", "BOILER"]}
 
-        # Group records dynamically (catches unexpected sections or lowercase strings without dropping them)
+        # Group records dynamically
         for log in raw_serviced_logs:
-            sec = (log['resolved_section'] or 'GENERAL').upper()
+            sec = (log["resolved_section"] or "GENERAL").upper()
             if sec not in ledgers:
                 ledgers[sec] = []
             ledgers[sec].append(log)
 
-        # 4. ROOMS DATA QUERY
+        # 4. Room PPM Query
         if search_room:
             rooms = conn.execute("""
                 SELECT * FROM room_ppm 
@@ -1002,25 +1027,25 @@ def ppm_hub():
                 ORDER BY id DESC
             """, (current_month, f"{current_month}%", f"{month_prefix}%")).fetchall()
 
-        # 5. ARCHIVE ENGINES: Find all historical months that exist in the database
+        # 5. Archive Engine: Historical Months Data
         past_section_months = conn.execute(
-            "SELECT DISTINCT ppm_month FROM section_ppm WHERE ppm_month != ? ORDER BY ppm_month DESC", 
+            "SELECT DISTINCT ppm_month FROM section_ppm WHERE ppm_month != ? AND ppm_month IS NOT NULL ORDER BY ppm_month DESC", 
             (current_month,)
         ).fetchall()
         
         past_room_months = conn.execute(
-            "SELECT DISTINCT ppm_month FROM room_ppm WHERE ppm_month != ? ORDER BY ppm_month DESC", 
+            "SELECT DISTINCT ppm_month FROM room_ppm WHERE ppm_month != ? AND ppm_month IS NOT NULL ORDER BY ppm_month DESC", 
             (current_month,)
         ).fetchall()
         
-        # Consolidate all distinct past months
+        # Consolidate distinct historical months
         all_archive_months = sorted(
-            list(set([m['ppm_month'] for m in past_section_months if m['ppm_month']] + 
-                     [m['ppm_month'] for m in past_room_months if m['ppm_month']])), 
+            list(set([m["ppm_month"] for m in past_section_months if m["ppm_month"]] + 
+                     [m["ppm_month"] for m in past_room_months if m["ppm_month"]])), 
             reverse=True
         )
         
-        # Compile all historical archive data chunks
+        # Compile archive datasets
         archived_data = {}
         for month in all_archive_months:
             archived_data[month] = {
