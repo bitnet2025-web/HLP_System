@@ -251,6 +251,52 @@ def init_db_migration():
         conn.commit()
 
 init_db_migration()
+import json
+import os
+
+USERS_FILE = os.path.join(app.root_path, 'users.json')
+
+# Default user structure if the file doesn't exist yet
+DEFAULT_USERS = {
+    "admin": {
+        "password": os.environ.get("ADMIN_PASSWORD", "admin123"),
+        "role": "ADMIN",
+        "section": "ALL"
+    },
+    "supervisor": {
+        "password": os.environ.get("SUPERVISOR_PASSWORD", "super123"),
+        "role": "SUPERVISOR",
+        "section": "ALL"
+    },
+    "technician": {
+        "password": os.environ.get("TECH_PASSWORD", "123"),
+        "role": "TECHNICIAN",
+        "section": "ALL"
+    }
+}
+
+def load_users():
+    """Load users from users.json, falling back to defaults if file is missing/corrupted."""
+    if os.path.exists(USERS_FILE):
+        try:
+            with open(USERS_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading users.json: {e}")
+    return DEFAULT_USERS
+
+def save_users(users_data):
+    """Write current users dictionary back to users.json."""
+    try:
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users_data, f, indent=4)
+        return True
+    except Exception as e:
+        print(f"Error saving users.json: {e}")
+        return False
+
+# Initialize in-memory USERS dictionary from file/defaults
+USERS = load_users()
 # =====================
 # AUTHENTICATION
 # =====================
@@ -391,6 +437,10 @@ def inject_pending_counts():
 from flask import send_from_directory
 # In your Flask app.py / routes file
 from flask import send_from_directory
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+
+
 
 @app.route('/sw.js')
 @app.route('/service-worker.js')
@@ -461,12 +511,14 @@ def dashboard():
         machinery_dept_pending=machinery_dept_pending,
         requisition_dept_costs=requisition_dept_costs,
     )
+
 @app.route("/admin/dashboard", methods=["GET", "POST"])
 @login_required
 def dash_admin():
-    # Verify Admin Role
-    if session.get("role", "").upper() != "ADMIN":
-        flash("Access denied. Admin privileges required.", "danger")
+    # Verify Admin or Supervisor Role (matches your login session structure)
+    user_role = session.get("role", "").upper()
+    if user_role not in ["ADMIN", "SUPERVISOR"]:
+        flash("Access denied. Admin or Supervisor privileges required.", "danger")
         return redirect(url_for("dashboard"))
 
     if request.method == "POST":
@@ -486,19 +538,23 @@ def dash_admin():
             })
             flash("Global rates updated successfully!", "success")
 
-        # 2. HANDLE PASSWORD RESET
+        # HANDLE PASSWORD RESET
         elif action == "reset_password":
-            target_user = request.form.get("target_user")
-            new_password = request.form.get("new_password")
+            target_user = request.form.get("target_user", "").lower().strip()
+            new_password = request.form.get("new_password", "").strip()
 
-            if target_user in USERS:
+            if not new_password:
+                flash("Password cannot be empty.", "warning")
+            elif target_user in USERS:
                 USERS[target_user]["password"] = new_password
-                flash(f"Password updated successfully for {target_user}!", "success")
+                
+                # Save changes permanently to users.json
+                if save_users(USERS):
+                    flash(f"Password updated and saved permanently for '{target_user}'!", "success")
+                else:
+                    flash(f"Password updated in session, but failed to write to file.", "warning")
             else:
-                flash("User not found.", "danger")
-
-        # Redirect back to GET request to prevent blank screen & re-submission
-        return redirect(url_for("dash_admin"))
+                flash(f"User '{target_user}' not found in system.", "danger")
 
     # GET REQUEST LOGIC
     current_rates = READINGS.get("rates", {
