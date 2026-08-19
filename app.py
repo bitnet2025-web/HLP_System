@@ -1,11 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from functools import wraps
+import os
+import json
+import sqlite3
 from datetime import date, datetime
-from collections import Counter 
-import sqlite3 
+from collections import Counter
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 DATABASE = 'hlp_system.db'
 
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "hlp_secret_key")
+
+# =====================
+# DATA STORAGE & DB CONFIG
+# =====================
 def fix_requisitions_table():
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.execute("PRAGMA table_info(requisitions)")
@@ -31,16 +39,17 @@ def fix_requisitions_table():
                 SELECT date, requester, dept, item, qty, purpose, status FROM requisitions_old
             ''')
             conn.execute("DROP TABLE requisitions_old")
-            print("Table updated successfully!")
 
-fix_requisitions_table()
+def fix_database_columns():
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.execute("PRAGMA table_info(requisitions)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        if 'date_ordered' not in columns:
+            conn.execute("ALTER TABLE requisitions ADD COLUMN date_ordered TEXT")
+        if 'date_received' not in columns:
+            conn.execute("ALTER TABLE requisitions ADD COLUMN date_received TEXT")
 
-app = Flask(__name__)
-app.secret_key = "hlp_secret_key"
-
-# =====================
-# DATA STORAGE & DB CONFIG
-# =====================
 def init_db():
     with sqlite3.connect(DATABASE) as conn:
         # 1. Dynamic Asset Inventory Ledger
@@ -106,7 +115,6 @@ def init_db():
             )
         ''')
         
-        # Insert initial default rates if empty
         cursor = conn.execute('SELECT COUNT(*) FROM hlp_rates')
         if cursor.fetchone()[0] == 0:
             conn.execute('''
@@ -194,20 +202,18 @@ def init_db():
             )
         """)
 
-        # --- SAFE DATABASE MIGRATION UPGRADE PATCHES ---
+        # SAFE DATABASE MIGRATION UPGRADE PATCHES
         missing_columns = [
             ("section_ppm", "supervisor_name", "TEXT DEFAULT 'Pending Signature'"),
             ("section_ppm", "chief_engineer_name", "TEXT DEFAULT 'Pending Signature'"),
             ("section_ppm", "supervisor_signed_at", "TEXT"),
             ("section_ppm", "chief_signed_at", "TEXT"),
             ("section_ppm", "ppm_month", "TEXT"),
-            
             ("room_ppm", "supervisor_name", "TEXT DEFAULT 'Pending Signature'"),
             ("room_ppm", "chief_engineer_name", "TEXT DEFAULT 'Pending Signature'"),
             ("room_ppm", "supervisor_signed_at", "TEXT"),
             ("room_ppm", "chief_signed_at", "TEXT"),
             ("room_ppm", "ppm_month", "TEXT"),
-            
             ("daily_report_status", "updated_at", "TEXT")
         ]
 
@@ -215,45 +221,21 @@ def init_db():
             try:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type};")
             except sqlite3.OperationalError:
-                pass  # Column already exists, safe to ignore
+                pass
 
         conn.commit()
-    print("Database initialization and schema migration completed.")
 
-# Run DB setup immediately on startup
-init_db()
+# Run migrations and setup safely
+try:
+    fix_requisitions_table()
+    fix_database_columns()
+    init_db()
+except Exception as e:
+    print(f"Database setup error: {e}")
 
-USERS = {
-    "admin": {"password": "admin123", "role": "ADMIN", "section": "ALL"},
-    "supervisor": {"password": "1234", "role": "SUPERVISOR", "section": "ALL"},
-    "technician": {"password": "1234", "role": "TECHNICIAN", "section": "ALL"}
-}
-
-
-READINGS = {
-    "drafts": [],
-    "confirmed": [],
-    "rates": {
-        "electricity": 19.33, "ncc": 67.0, "borehole": 68.0, 
-        "lpg_rate": 18.5, "lpg_scm": 113.0, "diesel": 160.0,
-    }
-}
-
-def get_current_month_str():
-    return datetime.now().strftime("%Y-%m")
-
-def init_db_migration():
-    """Run check loops at boot to populate default values for migrated columns"""
-    current_m = get_current_month_str()
-    with sqlite3.connect(DATABASE) as conn:
-        conn.execute("UPDATE section_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
-        conn.execute("UPDATE room_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
-        conn.commit()
-
-init_db_migration()
-import os
-import json
-
+# =====================
+# USER HANDLING
+# =====================
 USERS_FILE = os.path.join(app.root_path, 'users.json')
 
 DEFAULT_USERS = {
@@ -275,56 +257,62 @@ DEFAULT_USERS = {
 }
 
 def load_users():
-    if os.path.exists(USERS_FILE):
-        try:
-            with open(USERS_FILE, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            app.logger.error(f"Error reading users.json: {e}")
-            return DEFAULT_USERS
-    return DEFAULT_USERS
-
-def save_users(users_data):
-    try:
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users_data, f, indent=4)
-        return True
-    except Exception as e:
-        app.logger.error(f"Error writing users.json: {e}")
-        return False
-
-# Load USERS safely
-USERS = load_users()
-
-def load_users():
     """Load users from users.json, falling back to defaults if file is missing/corrupted."""
     if os.path.exists(USERS_FILE):
         try:
-            with open(USERS_FILE, 'r') as f:
+            with open(USERS_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Error loading users.json: {e}")
+            app.logger.error(f"Error loading users.json: {e}")
+            return DEFAULT_USERS
     return DEFAULT_USERS
 
 def save_users(users_data):
     """Write current users dictionary back to users.json."""
     try:
-        with open(USERS_FILE, 'w') as f:
+        with open(USERS_FILE, 'w', encoding='utf-8') as f:
             json.dump(users_data, f, indent=4)
         return True
     except Exception as e:
-        print(f"Error saving users.json: {e}")
+        app.logger.error(f"Error saving users.json: {e}")
         return False
 
-# Initialize in-memory USERS dictionary from file/defaults
+# Initialize USERS dictionary
 USERS = load_users()
+
+READINGS = {
+    "drafts": [],
+    "confirmed": [],
+    "rates": {
+        "electricity": 19.33, "ncc": 67.0, "borehole": 68.0, 
+        "lpg_rate": 18.5, "lpg_scm": 113.0, "diesel": 160.0,
+    }
+}
+
+def get_current_month_str():
+    return datetime.now().strftime("%Y-%m")
+
+def init_db_migration():
+    """Populate default values for migrated columns"""
+    current_m = get_current_month_str()
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            conn.execute("UPDATE section_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
+            conn.execute("UPDATE room_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
+            conn.commit()
+    except Exception as e:
+        print(f"Migration patch failed: {e}")
+
+init_db_migration()
+
 # =====================
 # AUTHENTICATION
 # =====================
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if "user" not in session: return redirect(url_for("login"))
+        if "user" not in session: 
+            return redirect(url_for("login"))
         return f(*args, **kwargs)
     return wrapper
 
@@ -345,10 +333,6 @@ def role_required(*roles):
 # SYSTEM UTILITY HELPERS
 # =====================
 def get_unified_readings_for_date(target_date):
-    """
-    Unified engine compilation. Handles alternative date formatting schemes 
-    (YYYY-MM-DD vs DD/MM/YYYY) and normalizes table input parameters.
-    """
     readings_dict = {}
     alt_date = ""
     if target_date and "-" in target_date:
@@ -374,7 +358,6 @@ def get_unified_readings_for_date(target_date):
                 if clean_key.lower().startswith("f_plumbing_"):
                     clean_key = "f_" + clean_key[11:]
                 
-                # Set direct and normalized variable mappings
                 readings_dict[clean_key] = val
                 readings_dict[param] = val
                 readings_dict[param.replace(":", "")] = val
@@ -386,7 +369,8 @@ def get_unified_readings_for_date(target_date):
 
 def calculate_hlp_costs(unified_data):
     rates = READINGS["rates"]
-    def gv(k): return unified_data.get(k, unified_data.get(k.replace(":","").replace("_",""), 0))
+    def gv(k): 
+        return unified_data.get(k, unified_data.get(k.replace(":","").replace("_",""), 0))
     try:
         elec_units = max(0, float(gv('f_kwh_00:00')) - float(gv('f_kwh_06:00')))
         water_units = max(0, float(gv('f_flow_ncc_23:59')) - float(gv('f_flow_ncc_00:00')))
@@ -401,56 +385,6 @@ def calculate_hlp_costs(unified_data):
     }
     costs["grand_total"] = costs["elec_total"] + costs["water_total"] + costs["lpg_total"]
     return costs
-
-def fix_database_columns():
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.execute("PRAGMA table_info(requisitions)")
-        columns = [column[1] for column in cursor.fetchall()]
-        
-        if 'date_ordered' not in columns:
-            conn.execute("ALTER TABLE requisitions ADD COLUMN date_ordered TEXT")
-            print("Added column: date_ordered")
-            
-        if 'date_received' not in columns:
-            conn.execute("ALTER TABLE requisitions ADD COLUMN date_received TEXT")
-            print("Added column: date_received")
-
-fix_database_columns()
-@app.context_processor
-def inject_pending_counts():
-    """Dynamically counts pending items to display as alert badges in the sidebar navigation."""
-    pending_reports_count = 0
-    pending_handovers_count = 0
-    
-    try:
-        with sqlite3.connect(DATABASE) as conn:
-            conn.row_factory = sqlite3.Row
-            
-            # 1. Count unapproved daily master reports (Status is missing or 'Pending')
-            # Adjust table/status values if yours are named slightly differently
-            cursor = conn.execute("""
-                SELECT COUNT(*) as cnt 
-                FROM daily_report_status 
-                WHERE status = 'Pending' OR status IS NULL
-            """)
-            pending_reports_count = cursor.fetchone()['cnt']
-            
-            # 2. Count un-executed shift handovers
-            cursor = conn.execute("""
-                SELECT COUNT(*) as cnt 
-                FROM shift_handovers 
-                WHERE status = 'Pending Handover'
-            """)
-            pending_handovers_count = cursor.fetchone()['cnt']
-            
-    except Exception as e:
-        # Failsafe: If database hasn't initialized yet or tables don't exist, keep counters at 0
-        print(f"Sidebar badge context provider warning: {e}")
-        
-    return dict(
-        pending_reports_count=pending_reports_count,
-        pending_handovers_count=pending_handovers_count
-    )
 # =====================
 # SYSTEM ROUTES
 # =====================
