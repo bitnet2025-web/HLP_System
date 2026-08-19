@@ -668,11 +668,11 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No active room logs entry for this cycle.</td></tr>
+                        <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No active guest room PPM logged this month.</td></tr>
                     {% endfor %}
                     <tr class="no-match-row" style="display: none;">
                         <td colspan="7" style="text-align: center; color: #a0aec0; font-style: italic; padding: 15px;">
-                            No matching room logs found.
+                            No matching guest room entries found.
                         </td>
                     </tr>
                 </tbody>
@@ -680,159 +680,228 @@
         </div>
     </div>
 
-    <!-- Monthly Vault Archives -->
-    <h2 style="color:#4a5568; margin: 30px 0 0 0; border-bottom: 2px dashed #cbd5e0; padding-bottom:5px;">📦 Historical Monthly Vault Archives</h2>
-    
-    {% for month_tag, data in archived_data.items() %}
-        <div class="archive-group">
-            <div class="archive-header" onclick="toggleArchiveVault('vault-{{ month_tag }}')">
-                <span>📁 Log Archives for Cycle Reference Loop: <strong>{{ month_tag }}</strong></span>
-                <span id="arrow-vault-{{ month_tag }}">▼ View System Archive</span>
-            </div>
-            
-            <div id="vault-{{ month_tag }}" class="archive-content">
-                <h4 style="color:var(--ppm-navy); margin-top:0;">⚙️ Machinery Historical Track Logs</h4>
-                <div class="table-responsive-container">
-                    <table class="hub-table" style="margin-bottom:20px;">
-                        <thead>
-                            <tr><th>Date</th><th>Asset</th><th>Section</th><th>Technician</th><th>Details</th><th>Supervisor</th><th>Chief Engineer</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for r in data.machinery %}
-                                <tr>
-                                    <td>{{ r.ppm_date }}</td>
-                                    <td>{{ r.equipment_name }}</td>
-                                    <td><span style="background:#edf2f7; color:#4a5568; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">{{ r.asset_section }}</span></td>
-                                    <td>{{ r.technician_name }}</td>
-                                    <td>{{ r.work_details }}</td>
-                                    <td><span style="color:#2b6cb0;">👤 {{ r.supervisor_name if r.supervisor_name else 'Unsigned' }}</span></td>
-                                    <td><span style="color:#2f855a;">🛡️ {{ r.chief_engineer_name if r.chief_engineer_name else 'Unsigned' }}</span></td>
-                                </tr>
-                            {% else %}
-                                <tr><td colspan="7" style="color:#a0aec0; font-style:italic;">No machinery metrics logged during this cycle loop.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <h4 style="color:#2b6cb0;">🏨 Guest Rooms Historical Track Logs</h4>
-                <div class="table-responsive-container">
-                    <table class="hub-table">
-                        <thead>
-                            <tr><th>Date</th><th>Room</th><th>Technician</th><th>Notes Summary</th><th>Supervisor</th><th>Chief Engineer</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for r in data.rooms %}
-                                <tr>
-                                    <td>{{ r.ppm_date }}</td>
-                                    <td><strong>{{ r.room_number }}</strong></td>
-                                    <td>{{ r.technician_name }}</td>
-                                    <td>{{ r.notes }}</td>
-                                    <td><span style="color:#2b6cb0;">👤 {{ r.supervisor_name if r.supervisor_name else 'Unsigned' }}</span></td>
-                                    <td><span style="color:#2f855a;">🛡️ {{ r.chief_engineer_name if r.chief_engineer_name else 'Unsigned' }}</span></td>
-                                </tr>
-                            {% else %}
-                                <tr><td colspan="6" style="color:#a0aec0; font-style:italic;">No guest room checklists committed during this archive window.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+    <!-- Archive Vault Section -->
+    <div style="margin-top:20px;">
+        <div class="archive-header" onclick="toggleArchiveVault()">
+            <span>📦 Archive Vault (Historical Closed Logs)</span>
+            <span id="archive-toggle-icon">▼</span>
+        </div>
+        <div id="archive-vault-container" class="archive-content">
+            <p style="font-size: 0.85em; color: #4a5568; margin-top: 0;">Historical records older than the current calendar month are automatically preserved here.</p>
+            <div class="table-responsive-container">
+                <table class="hub-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Target / Machine</th>
+                            <th>Technician</th>
+                            <th>Details</th>
+                            <th>Supervisor Sign-off</th>
+                            <th>Chief Approval</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for arc in archives %}
+                            <tr>
+                                <td><span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:0.8em;">{{ arc.type|upper }}</span></td>
+                                <td>{{ arc.ppm_date }}</td>
+                                <td><strong>{{ arc.target_name }}</strong></td>
+                                <td>{{ arc.technician_name }}</td>
+                                <td>{{ arc.work_details }}</td>
+                                <td>{{ arc.supervisor_name or 'N/A' }}</td>
+                                <td>{{ arc.chief_engineer_name or 'N/A' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="7" style="text-align:center; color:#a0aec0; font-style:italic;">No archived records present in the vault.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-    {% else %}
-        <p style="color:#a0aec0; font-style:italic; padding:10px;">No historical closed logs found in the archive repository vault yet.</p>
-    {% endfor %}
+    </div>
 
 </div>
 
-<!-- Edit Report Modal Container -->
-<div id="editReportModal" class="modal-backdrop">
+<!-- Modal for Editing Entry -->
+<div id="editEntryModal" class="modal-backdrop">
     <div class="modal-box">
-        <h3 style="margin-top: 0; color: var(--ppm-navy); border-bottom: 2px solid #edf2f7; padding-bottom: 10px;">✏️ Edit Maintenance Report</h3>
-        <form id="editReportForm" onsubmit="submitEditNoJump(event)">
-            <input type="hidden" id="edit_table_type">
-            <input type="hidden" id="edit_record_id">
+        <h3 style="margin-top:0; color:var(--ppm-navy); border-bottom:2px solid #edf2f7; padding-bottom:8px;">✏️ Edit PPM Entry</h3>
+        <form id="editEntryForm" onsubmit="submitEditEntryForm(event)">
+            <input type="hidden" id="edit_type" name="edit_type">
+            <input type="hidden" id="edit_record_id" name="record_id">
+            
             <div class="input-group">
                 <label>Technician Name</label>
                 <input type="text" id="edit_technician_name" name="technician_name" required>
             </div>
+            
             <div class="input-group">
-                <label>Target Machine / Room</label>
+                <label id="edit_target_label">Target Asset / Room</label>
                 <input type="text" id="edit_target_name" name="target_name" required>
             </div>
+            
             <div class="input-group">
-                <label>Work Summary Details</label>
+                <label>Work Summary / Notes</label>
                 <textarea id="edit_work_details" name="work_details" rows="4" required></textarea>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button type="button" onclick="closeEditModal()" style="background: #e2e8f0; color: #2d3748; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer;">Cancel</button>
-                <button type="submit" style="background: var(--ppm-primary); color: white; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer;">Save Changes</button>
+            
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                <button type="button" style="background:#edf2f7; border:1px solid #cbd5e0; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold; color:#4a5568;" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" style="background:var(--ppm-primary); color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">Save Changes</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function toggleArchiveVault(id) {
-        const el = document.getElementById(id);
-        const arrow = document.getElementById('arrow-' + id);
-        if (el.style.display === "block") {
-            el.style.display = "none";
-            arrow.innerHTML = "▼ View System Archive";
+    // Toggle Archive Vault Display
+    function toggleArchiveVault() {
+        const content = document.getElementById('archive-vault-container');
+        const icon = document.getElementById('archive-toggle-icon');
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            icon.textContent = '▼';
         } else {
-            el.style.display = "block";
-            arrow.innerHTML = "▲ Hide System Archive";
+            content.style.display = 'block';
+            icon.textContent = '▲';
         }
     }
 
-    function openEditModal(tableType, recordId) {
-        const row = document.getElementById(`row-${tableType}-${recordId}`);
+    // Modal Control Functions
+    function openEditModal(type, recordId) {
+        const row = document.getElementById(`row-${type}-${recordId}`);
         if (!row) return;
 
-        const techName = row.querySelector('.tech-name-val')?.innerText.trim() || '';
-        const targetName = row.querySelector('.target-name-val')?.innerText.trim() || '';
-        const workDetails = row.querySelector('.work-details-val')?.innerText.trim() || '';
+        const techName = row.querySelector('.tech-name-val').textContent.trim();
+        const targetName = row.querySelector('.target-name-val').textContent.trim();
+        const workDetails = row.querySelector('.work-details-val').textContent.trim();
 
-        document.getElementById('edit_table_type').value = tableType;
+        document.getElementById('edit_type').value = type;
         document.getElementById('edit_record_id').value = recordId;
         document.getElementById('edit_technician_name').value = techName;
         document.getElementById('edit_target_name').value = targetName;
         document.getElementById('edit_work_details').value = workDetails;
 
-        document.getElementById('editReportModal').style.display = 'flex';
+        if (type === 'room') {
+            document.getElementById('edit_target_label').textContent = 'Room Number Reference';
+        } else {
+            document.getElementById('edit_target_label').textContent = 'Machine Asset Name';
+        }
+
+        document.getElementById('editEntryModal').style.display = 'flex';
     }
 
     function closeEditModal() {
-        document.getElementById('editReportModal').style.display = 'none';
+        document.getElementById('editEntryModal').style.display = 'none';
     }
 
-    /* Client-side Table Search Filter */
-    document.querySelectorAll('.section-search-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const targetTableId = this.getAttribute('data-target-table');
-            const table = document.getElementById(targetTableId);
-            if (!table) return;
+    // AJAX Form Handling & Live Filtering
+    document.addEventListener('DOMContentLoaded', function() {
+        // Real-time table searching
+        const searchInputs = document.querySelectorAll('.section-search-input');
+        searchInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                const targetTableId = this.getAttribute('data-target-table');
+                const table = document.getElementById(targetTableId);
+                if (!table) return;
 
-            const filter = this.value.toLowerCase().trim();
-            const rows = table.querySelectorAll('tbody tr:not(.no-match-row)');
-            let visibleCount = 0;
+                const query = this.value.toLowerCase().trim();
+                const rows = table.querySelectorAll('tbody tr.ppm-row-item');
+                let matchesCount = 0;
 
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                if (text.includes(filter)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        row.style.display = '';
+                        matchesCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const noMatchRow = table.querySelector('.no-match-row');
+                if (noMatchRow) {
+                    noMatchRow.style.display = (matchesCount === 0 && rows.length > 0) ? '' : 'none';
                 }
             });
+        });
 
-            const noMatchRow = table.querySelector('.no-match-row');
-            if (noMatchRow) {
-                noMatchRow.style.display = (visibleCount === 0) ? '' : 'none';
-            }
+        // AJAX Signatures
+        const signForms = document.querySelectorAll('.ajax-sign-form');
+        signForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formUrl = this.action;
+                const formData = new FormData(this);
+
+                fetch(formUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload(); // Refresh view state on successful sign
+                    } else {
+                        alert(data.message || 'Signature update failed.');
+                    }
+                })
+                .catch(() => {
+                    // Fallback to traditional form submit if AJAX is unhandled
+                    this.submit();
+                });
+            });
         });
     });
+
+    // Delete handling without scroll jump
+    function deleteEntryNoJump(type, recordId) {
+        if (!confirm('Are you sure you want to delete this PPM record?')) return;
+
+        fetch(`/ppm_hub/delete/${type}/${recordId}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.getElementById(`row-${type}-${recordId}`);
+                if (row) row.remove();
+            } else {
+                alert(data.message || 'Error deleting entry.');
+            }
+        })
+        .catch(() => {
+            window.location.href = `/ppm_hub/delete/${type}/${recordId}`;
+        });
+    }
+
+    // Submit Edit Form via AJAX
+    function submitEditEntryForm(event) {
+        event.preventDefault();
+        const form = document.getElementById('editEntryForm');
+        const formData = new FormData(form);
+
+        fetch('/ppm_hub/edit', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeEditModal();
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to edit entry.');
+            }
+        })
+        .catch(() => {
+            form.submit();
+        });
+    }
 </script>
 
 {% endblock %}

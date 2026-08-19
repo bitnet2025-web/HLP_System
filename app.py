@@ -1074,45 +1074,64 @@ def ppm_hub():
         search_room=search_room,
         archived_data=archived_data
     )
+import sqlite3
+
 @app.route('/verify_ppm_action/<action_role>/<table_type>/<int:record_id>', methods=['POST'])
 def verify_ppm_action(action_role, table_type, record_id):
-    # Fetch logged-in user role from session
     user_role = session.get('user_role', '').upper()
 
-    # Determine verification title based on current login role / action_role
     if user_role == 'ADMIN' or action_role == 'admin':
         approver_name = "Chief Engineer"
     elif user_role == 'SUPERVISOR' or action_role == 'supervisor':
         approver_name = "Supervisor"
     else:
-        # Optional fallback to specific username or default label
         approver_name = session.get('user_name') or session.get('username') or 'Verified Staff'
 
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-    # TODO: Database Update Logic
-    # if table_type == 'section':
-    #     if action_role == 'supervisor':
-    #         db.execute("UPDATE section_ppm SET supervisor_name = ?, supervisor_signed_at = ? WHERE id = ?", (approver_name, current_time, record_id))
-    #     elif action_role == 'admin':
-    #         db.execute("UPDATE section_ppm SET chief_engineer_name = ?, chief_signed_at = ? WHERE id = ?", (approver_name, current_time, record_id))
+    # Update database using your native sqlite3 setup
+    with sqlite3.connect(DATABASE) as conn:
+        if table_type == 'section':
+            if action_role == 'supervisor':
+                conn.execute(
+                    "UPDATE section_ppm SET supervisor_name = ?, supervisor_signed_at = ? WHERE id = ?",
+                    (approver_name, current_time, record_id)
+                )
+            elif action_role == 'admin':
+                conn.execute(
+                    "UPDATE section_ppm SET chief_engineer_name = ?, chief_signed_at = ? WHERE id = ?",
+                    (approver_name, current_time, record_id)
+                )
+        elif table_type == 'room':
+            if action_role == 'supervisor':
+                conn.execute(
+                    "UPDATE room_ppm SET supervisor_name = ?, supervisor_signed_at = ? WHERE id = ?",
+                    (approver_name, current_time, record_id)
+                )
+            elif action_role == 'admin':
+                conn.execute(
+                    "UPDATE room_ppm SET chief_engineer_name = ?, chief_signed_at = ? WHERE id = ?",
+                    (approver_name, current_time, record_id)
+                )
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
             'status': 'success',
-            'approver': approver_name,  # Returns "Chief Engineer" or "Supervisor"
+            'approver': approver_name,
             'timestamp': current_time
         })
 
-    return redirect(url_for('ppm_hub'))
+    # Preserve scroll position by returning to the modified row
+    return redirect(url_for('ppm_hub', _anchor=f"row-{table_type}-{record_id}"))
+
+
 @app.route('/delete_ppm_entry/<table_type>/<int:record_id>', methods=['POST'])
 def delete_ppm_entry(table_type, record_id):
-    # TODO: Perform database deletion based on table_type
-    # Example SQL:
-    # if table_type == 'section':
-    #     db.execute("DELETE FROM section_ppm WHERE id = ?", (record_id,))
-    # elif table_type == 'room':
-    #     db.execute("DELETE FROM room_ppm WHERE id = ?", (record_id,))
+    with sqlite3.connect(DATABASE) as conn:
+        if table_type == 'section':
+            conn.execute("DELETE FROM section_ppm WHERE id = ?", (record_id,))
+        elif table_type == 'room':
+            conn.execute("DELETE FROM room_ppm WHERE id = ?", (record_id,))
     
     return redirect(url_for('ppm_hub'))
 
@@ -1123,23 +1142,21 @@ def edit_ppm_entry(table_type, record_id):
     target_name = request.form.get('target_name')
     work_details = request.form.get('work_details')
 
-    # TODO: Perform database update based on table_type
-    # Example SQL:
-    # if table_type == 'section':
-    #     db.execute("""
-    #         UPDATE section_ppm 
-    #         SET technician_name = ?, equipment_name = ?, work_details = ? 
-    #         WHERE id = ?
-    #     """, (technician_name, target_name, work_details, record_id))
-    # elif table_type == 'room':
-    #     db.execute("""
-    #         UPDATE room_ppm 
-    #         SET technician_name = ?, room_number = ?, notes = ? 
-    #         WHERE id = ?
-    #     """, (technician_name, target_name, work_details, record_id))
+    with sqlite3.connect(DATABASE) as conn:
+        if table_type == 'section':
+            conn.execute("""
+                UPDATE section_ppm 
+                SET technician_name = ?, equipment_name = ?, work_details = ? 
+                WHERE id = ?
+            """, (technician_name, target_name, work_details, record_id))
+        elif table_type == 'room':
+            conn.execute("""
+                UPDATE room_ppm 
+                SET technician_name = ?, room_number = ?, notes = ? 
+                WHERE id = ?
+            """, (technician_name, target_name, work_details, record_id))
 
-    return redirect(url_for('ppm_hub'))
-
+    return redirect(url_for('ppm_hub', _anchor=f"row-{table_type}-{record_id}"))
 @app.route("/engineering/dashboard", methods=["GET"])
 @login_required
 def engineering_dashboard():
