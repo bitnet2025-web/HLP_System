@@ -872,7 +872,7 @@ def update_hlp_rates():
 import sqlite3
 from datetime import datetime
 from flask import request, session, redirect, url_for, render_template, flash
-
+@app.route('/ppm', endpoint='ppm')
 @app.route("/ppm_hub", methods=["GET", "POST"])
 @login_required
 def ppm_hub():
@@ -1325,7 +1325,6 @@ def clear_requisitions():
     return redirect(url_for('material_requisition'))
 
 
-
-if __name__ == "__main__":
-    # host='0.0.0.0' tells Flask to accept connections from other devices on your Wi-Fi
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == '__main__':
+    app.config['PROPAGATE_EXCEPTIONS'] = True
+    app.run(host='127.0.0.1', port=5050, debug=True)
