@@ -1,17 +1,17 @@
 {
-  "admin": {
-    "password": "admin123",
-    "role": "ADMIN",
-    "section": "ALL"
-  },
-  "supervisor": {
-    "password": "super123",
-    "role": "SUPERVISOR",
-    "section": "ALL"
-  },
-  "technician": {
-    "password": "123",
-    "role": "TECHNICIAN",
-    "section": "ALL"
-  }
+    "admin": {
+        "password": "admin123",
+        "role": "ADMIN",
+        "section": "ALL"
+    },
+    "supervisor": {
+        "password": "super123",
+        "role": "SUPERVISOR",
+        "section": "ALL"
+    },
+    "technician": {
+        "password": "123",
+        "role": "TECHNICIAN",
+        "section": "ALL"
+    }
 }

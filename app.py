@@ -251,12 +251,11 @@ def init_db_migration():
         conn.commit()
 
 init_db_migration()
-import json
 import os
+import json
 
 USERS_FILE = os.path.join(app.root_path, 'users.json')
 
-# Default user structure if the file doesn't exist yet
 DEFAULT_USERS = {
     "admin": {
         "password": os.environ.get("ADMIN_PASSWORD", "admin123"),
@@ -274,6 +273,28 @@ DEFAULT_USERS = {
         "section": "ALL"
     }
 }
+
+def load_users():
+    if os.path.exists(USERS_FILE):
+        try:
+            with open(USERS_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            app.logger.error(f"Error reading users.json: {e}")
+            return DEFAULT_USERS
+    return DEFAULT_USERS
+
+def save_users(users_data):
+    try:
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users_data, f, indent=4)
+        return True
+    except Exception as e:
+        app.logger.error(f"Error writing users.json: {e}")
+        return False
+
+# Load USERS safely
+USERS = load_users()
 
 def load_users():
     """Load users from users.json, falling back to defaults if file is missing/corrupted."""
@@ -456,18 +477,18 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").lower().strip()
         password = request.form.get("password", "").strip()
-        
-        if username in USERS and USERS[username]["password"] == password:
+
+        # Reload USERS to ensure fresh data
+        current_users = load_users()
+
+        if username in current_users and current_users[username].get("password") == password:
             session.clear()
             session["user"] = username
-            session["role"] = USERS[username]["role"].upper()
-            
-            # Safe access: defaults to "ALL" if "section" is missing in USERS
-            user_section = USERS[username].get("section", "ALL")
-            session["section"] = user_section.upper()
-            
+            session["role"] = current_users[username].get("role", "TECHNICIAN").upper()
+            session["section"] = current_users[username].get("section", "ALL").upper()
+
             return redirect(url_for("dashboard"))
-            
+
         flash("Invalid credentials", "danger")
     return render_template("login.html")
 @app.route("/logout")
