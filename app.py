@@ -30,7 +30,17 @@ LOCAL_SQLITE = 'hlp_system.db'
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "hlp_secret_key")
+import sqlite3
+import os
 
+# 1. Define DATABASE once at the top of your project
+DATABASE = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'database.db')
+
+# 2. Centralized Database Helper
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
 # =====================
 # NEON / POSTGRES DYNAMIC DB ADAPTER
 # =====================
@@ -968,7 +978,7 @@ LOCAL_TZ = ZoneInfo("Africa/Nairobi")
 @app.route("/ppm_hub", methods=["GET", "POST"])
 @login_required
 def ppm_hub():
-    user_role = session.get("role", "").upper()
+    user_role = (session.get("role") or session.get("user_role") or "").upper()
     
     # 1. Fetch current time in East Africa Time (EAT)
     now_eat = datetime.now(LOCAL_TZ)
@@ -1168,21 +1178,22 @@ def ppm_hub():
         search_room=search_room,
         archived_data=archived_data
     )
-@app.route('/verify_ppm_action/<action_role>/<table_type>/<int:record_id>', methods=['POST'])
-def verify_ppm_action(action_role, table_type, record_id):
-    user_role = session.get('user_role', '').upper()
 
-    if user_role == 'ADMIN' or action_role == 'admin':
-        approver_name = "Chief Engineer"
-    elif user_role == 'SUPERVISOR' or action_role == 'supervisor':
-        approver_name = "Supervisor"
-    else:
-        approver_name = session.get('user_name') or session.get('username') or 'Verified Staff'
+
+@app.route('/verify_ppm_action/<action_role>/<table_type>/<int:record_id>', methods=['POST'])
+@login_required
+def verify_ppm_action(action_role, table_type, record_id):
+    # Retrieve user details from session gracefully
+    approver_name = (
+        session.get('user_name') or 
+        session.get('username') or 
+        session.get('name') or 
+        ('Chief Engineer' if action_role == 'admin' else 'Supervisor')
+    )
 
     # Correct time to local Nairobi/EAT time
     current_time = datetime.now(LOCAL_TZ).strftime('%Y-%m-%d %H:%M')
 
-    # Update database using native sqlite3
     with sqlite3.connect(DATABASE) as conn:
         if table_type == 'section':
             if action_role == 'supervisor':
@@ -1206,6 +1217,7 @@ def verify_ppm_action(action_role, table_type, record_id):
                     "UPDATE room_ppm SET chief_engineer_name = ?, chief_signed_at = ? WHERE id = ?",
                     (approver_name, current_time, record_id)
                 )
+        conn.commit()
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
         return jsonify({
@@ -1220,6 +1232,7 @@ def verify_ppm_action(action_role, table_type, record_id):
 
 
 @app.route('/delete_ppm_entry/<table_type>/<int:record_id>', methods=['POST'])
+@login_required
 def delete_ppm_entry(table_type, record_id):
     try:
         with sqlite3.connect(DATABASE) as conn:
@@ -1227,6 +1240,7 @@ def delete_ppm_entry(table_type, record_id):
                 conn.execute("DELETE FROM section_ppm WHERE id = ?", (record_id,))
             elif table_type == 'room':
                 conn.execute("DELETE FROM room_ppm WHERE id = ?", (record_id,))
+            conn.commit()
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
             return jsonify({'success': True, 'message': 'Entry deleted'})
@@ -1237,11 +1251,13 @@ def delete_ppm_entry(table_type, record_id):
             return jsonify({'success': False, 'message': str(e)}), 400
         return redirect(url_for('ppm_hub'))
 
+
 @app.route('/edit_ppm_entry/<table_type>/<int:record_id>', methods=['POST'])
+@login_required
 def edit_ppm_entry(table_type, record_id):
-    technician_name = request.form.get('technician_name')
-    target_name = request.form.get('target_name')
-    work_details = request.form.get('work_details')
+    technician_name = request.form.get('technician_name', '').strip()
+    target_name = request.form.get('target_name', '').strip()
+    work_details = request.form.get('work_details', '').strip()
 
     with sqlite3.connect(DATABASE) as conn:
         if table_type == 'section':
@@ -1256,6 +1272,7 @@ def edit_ppm_entry(table_type, record_id):
                 SET technician_name = ?, room_number = ?, notes = ? 
                 WHERE id = ?
             """, (technician_name, target_name, work_details, record_id))
+        conn.commit()
 
     return redirect(url_for('ppm_hub', _anchor=f"row-{table_type}-{record_id}"))
 @app.route("/engineering/dashboard", methods=["GET"])
