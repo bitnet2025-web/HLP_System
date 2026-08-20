@@ -93,7 +93,56 @@ def execute_query(query, params=(), fetch_all=False, fetch_one=False, commit=Fal
         if commit:
             db.commit()
         return res
+def init_db():
+    with get_db_connection() as conn:
+        # Create ppm_assets table if it doesn't exist
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ppm_assets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                machine_name TEXT NOT NULL,
+                asset_section TEXT NOT NULL,
+                model_serial TEXT,
+                maintenance_frequency TEXT,
+                next_schedule_date TEXT
+            )
+        """)
+        
+        # Create section_ppm table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS section_ppm (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ppm_date TEXT,
+                ppm_month TEXT,
+                section_name TEXT,
+                equipment_name TEXT,
+                technician_name TEXT,
+                work_details TEXT,
+                supervisor_name TEXT DEFAULT 'Pending Signature',
+                supervisor_signed_at TEXT,
+                chief_engineer_name TEXT DEFAULT 'Pending Signature',
+                chief_signed_at TEXT
+            )
+        """)
+        
+        # Create room_ppm table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS room_ppm (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ppm_date TEXT,
+                ppm_month TEXT,
+                room_number TEXT,
+                technician_name TEXT,
+                notes TEXT,
+                supervisor_name TEXT DEFAULT 'Pending Signature',
+                supervisor_signed_at TEXT,
+                chief_engineer_name TEXT DEFAULT 'Pending Signature',
+                chief_signed_at TEXT
+            )
+        """)
+        conn.commit()
 
+# Run table creation on startup
+init_db()
 # =====================
 # DATA STORAGE & DB CONFIG
 # =====================
