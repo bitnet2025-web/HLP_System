@@ -1,6 +1,8 @@
 import os
 import json
 import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import date, datetime, timedelta, timezone
 from collections import Counter
 from functools import wraps
@@ -19,25 +21,88 @@ def get_eat_time_str(fmt='%Y-%m-%d %H:%M'):
     """Returns a formatted EAT time string."""
     return get_eat_now().strftime(fmt)
 
-DATABASE = 'hlp_system.db'
+# Neon PostgreSQL Connection String (uses Environment Variable with default fallback)
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL", 
+    "postgresql://neondb_owner:npg_Jn1KX4zPUbTC@ep-noisy-paper-axjguij9-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require"
+)
+LOCAL_SQLITE = 'hlp_system.db'
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "hlp_secret_key")
 
 # =====================
+# NEON / POSTGRES DYNAMIC DB ADAPTER
+# =====================
+class DBConn:
+    """Context manager handling dynamic queries across SQLite or Neon PostgreSQL."""
+    def __init__(self, db_url=None):
+        self.db_url = db_url or DATABASE_URL
+
+    def __enter__(self):
+        if self.db_url and self.db_url.startswith("postgres"):
+            self.conn = psycopg2.connect(self.db_url, cursor_factory=RealDictCursor)
+            self.is_postgres = True
+        else:
+            self.conn = sqlite3.connect(LOCAL_SQLITE)
+            self.conn.row_factory = sqlite3.Row
+            self.is_postgres = False
+        return self
+
+    def execute(self, query, params=()):
+        cursor = self.conn.cursor()
+        sql_query = query
+        if self.is_postgres:
+            # Convert SQLite placeholders and definitions to PostgreSQL
+            sql_query = sql_query.replace("?", "%s")
+            sql_query = sql_query.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+            sql_query = sql_query.replace("PRAGMA table_info", "SELECT column_name FROM information_schema.columns WHERE table_name = ")
+        
+        cursor.execute(sql_query, params)
+        return cursor
+
+    def commit(self):
+        self.conn.commit()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.conn.rollback()
+        else:
+            self.conn.commit()
+        self.conn.close()
+
+# Helper function to execute queries across routes easily
+def execute_query(query, params=(), fetch_all=False, fetch_one=False, commit=False):
+    with DBConn() as db:
+        cur = db.execute(query, params)
+        res = None
+        if fetch_all:
+            res = cur.fetchall()
+        elif fetch_one:
+            res = cur.fetchone()
+        if commit:
+            db.commit()
+        return res
+
+# =====================
 # DATA STORAGE & DB CONFIG
 # =====================
 def fix_requisitions_table():
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.execute("PRAGMA table_info(requisitions)")
-        columns = [row[1] for row in cursor.fetchall()]
+    with DBConn() as db:
+        if db.is_postgres:
+            # PostgreSQL schema check
+            cur = db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'requisitions';")
+            columns = [row['column_name'] for row in cur.fetchall()]
+        else:
+            cur = db.execute("PRAGMA table_info(requisitions)")
+            columns = [row[1] for row in cur.fetchall()]
         
         if 'id' not in columns and len(columns) > 0:
             print("Adding 'id' column to requisitions...")
-            conn.execute("ALTER TABLE requisitions RENAME TO requisitions_old")
-            conn.execute('''
+            db.execute("ALTER TABLE requisitions RENAME TO requisitions_old")
+            db.execute('''
                 CREATE TABLE requisitions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id SERIAL PRIMARY KEY,
                     date TEXT,
                     requester TEXT,
                     dept TEXT,
@@ -47,26 +112,33 @@ def fix_requisitions_table():
                     status TEXT DEFAULT 'PENDING'
                 )
             ''')
-            conn.execute('''
+            db.execute('''
                 INSERT INTO requisitions (date, requester, dept, item, qty, purpose, status)
                 SELECT date, requester, dept, item, qty, purpose, status FROM requisitions_old
             ''')
-            conn.execute("DROP TABLE requisitions_old")
+            db.execute("DROP TABLE requisitions_old")
+            db.commit()
 
 def fix_database_columns():
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.execute("PRAGMA table_info(requisitions)")
-        columns = [column[1] for column in cursor.fetchall()]
+    with DBConn() as db:
+        if db.is_postgres:
+            cur = db.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'requisitions';")
+            columns = [row['column_name'] for row in cur.fetchall()]
+        else:
+            cur = db.execute("PRAGMA table_info(requisitions)")
+            columns = [column[1] for column in cur.fetchall()]
         
-        if 'date_ordered' not in columns:
-            conn.execute("ALTER TABLE requisitions ADD COLUMN date_ordered TEXT")
-        if 'date_received' not in columns:
-            conn.execute("ALTER TABLE requisitions ADD COLUMN date_received TEXT")
+        if columns:
+            if 'date_ordered' not in columns:
+                db.execute("ALTER TABLE requisitions ADD COLUMN date_ordered TEXT")
+            if 'date_received' not in columns:
+                db.execute("ALTER TABLE requisitions ADD COLUMN date_received TEXT")
+            db.commit()
 
 def init_db():
-    with sqlite3.connect(DATABASE) as conn:
+    with DBConn() as db:
         # 1. Dynamic Asset Inventory Ledger
-        conn.execute("""
+        db.execute("""
             CREATE TABLE IF NOT EXISTS ppm_assets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 asset_section TEXT NOT NULL,       
@@ -79,7 +151,7 @@ def init_db():
         """)
 
         # 2. Major Plant & Equipment Section PPM Logs
-        conn.execute("""
+        db.execute("""
             CREATE TABLE IF NOT EXISTS section_ppm (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 section_name TEXT NOT NULL, 
@@ -98,7 +170,7 @@ def init_db():
         """)
 
         # 3. Room-Specific PPM Ledger Table
-        conn.execute("""
+        db.execute("""
             CREATE TABLE IF NOT EXISTS room_ppm (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 room_number TEXT NOT NULL,
@@ -116,7 +188,7 @@ def init_db():
         """)
 
         # 4. HLP Rates Table
-        conn.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS hlp_rates (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 elect_rate REAL DEFAULT 19.33,
@@ -128,16 +200,18 @@ def init_db():
             )
         ''')
         
-        cursor = conn.execute('SELECT COUNT(*) FROM hlp_rates')
-        if cursor.fetchone()[0] == 0:
+        cursor = db.execute('SELECT COUNT(*) as cnt FROM hlp_rates')
+        row = cursor.fetchone()
+        cnt = row['cnt'] if isinstance(row, dict) else row[0]
+        if cnt == 0:
             current_now = get_eat_time_str('%Y-%m-%d %H:%M:%S')
-            conn.execute('''
+            db.execute('''
                 INSERT INTO hlp_rates (elect_rate, water_ncc_rate, water_bh_rate, lpg_rate, diesel_rate, updated_at)
                 VALUES (19.33, 67.00, 68.00, 113.00, 222.00, ?)
             ''', (current_now,))
 
         # 5. HLP Calculator Logs Table
-        conn.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS hlp_calculator_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 report_date TEXT NOT NULL,
@@ -153,7 +227,7 @@ def init_db():
         ''')
 
         # 6. Shift Handovers Table
-        conn.execute("""
+        db.execute("""
             CREATE TABLE IF NOT EXISTS shift_handovers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 section TEXT NOT NULL,
@@ -167,7 +241,7 @@ def init_db():
         """)
 
         # 7. HLP Core Readings & System Tables
-        conn.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS hlp_readings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 reading_date TEXT,
@@ -179,21 +253,21 @@ def init_db():
             )
         ''')
         
-        conn.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS requisitions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT, requester TEXT, dept TEXT, item TEXT, qty TEXT, purpose TEXT, status TEXT
             )
         ''')
         
-        conn.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS fuel_inventory (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT, fuel_type TEXT, quantity REAL, reference_no TEXT, received_by TEXT
             )
         ''')
         
-        conn.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS report_signatures (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 report_date TEXT,
@@ -204,7 +278,7 @@ def init_db():
             )
         ''')
         
-        conn.execute("""
+        db.execute("""
             CREATE TABLE IF NOT EXISTS daily_report_status (
                 report_date TEXT PRIMARY KEY,
                 status TEXT DEFAULT 'Pending Supervisor', 
@@ -233,11 +307,11 @@ def init_db():
 
         for table, column, col_type in missing_columns:
             try:
-                conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type};")
-            except sqlite3.OperationalError:
+                db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type};")
+            except Exception:
                 pass
 
-        conn.commit()
+        db.commit()
 
 # Run migrations and setup safely
 try:
@@ -246,6 +320,7 @@ try:
     init_db()
 except Exception as e:
     print(f"Database setup error: {e}")
+
 # =====================
 # USER HANDLING
 # =====================
@@ -309,10 +384,10 @@ def init_db_migration():
     """Populate default values for migrated columns"""
     current_m = get_current_month_str()
     try:
-        with sqlite3.connect(DATABASE) as conn:
-            conn.execute("UPDATE section_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
-            conn.execute("UPDATE room_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
-            conn.commit()
+        with DBConn() as db:
+            db.execute("UPDATE section_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
+            db.execute("UPDATE room_ppm SET ppm_month = ? WHERE ppm_month IS NULL OR ppm_month = ''", (current_m,))
+            db.commit()
     except Exception as e:
         print(f"Migration patch failed: {e}")
 
@@ -354,9 +429,8 @@ def get_unified_readings_for_date(target_date):
             alt_date = f"{p[2]}/{p[1]}/{p[0]}"
     
     try:
-        with sqlite3.connect(DATABASE) as conn:
-            conn.row_factory = sqlite3.Row
-            cursor = conn.execute(
+        with DBConn() as db:
+            cursor = db.execute(
                 "SELECT parameter, value FROM hlp_readings WHERE reading_date = ? OR reading_date = ?", 
                 (target_date, alt_date)
             )
